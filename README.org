@@ -1,0 +1,6 @@
+#+title: Readme
+* Introduction
+This project is based on:
++ [[https://medium.com/ai-cloud-lab/model-context-protocol-mcp-with-ollama-and-llama-3-a-step-by-step-guide-part-2-2a5917c8c745][medium]]
++ [[https://github.com/arjunprabhulal/mcp-flight-search/tree/main][server]]
++ [[https://github.com/arjunprabhulal/mcp-llama3-client][client]]
