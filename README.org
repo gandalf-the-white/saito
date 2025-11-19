@@ -1,3 +1,57 @@
 #+title: Readme
 * Introduction
 Just to prove that we can use practice *LLM* with *LISP*. 
+The agent is composed of different stacks:
++ Client (run-weather-agent)
++ Ollama Client
++ Ollama / LLM
++ Tool Manager
++ Tool Manager
+
+* Explication
+** Client (run-weather-agent)
++ Receives the user's question.
++ Builds the initial message with the system prompt.
++ Launches the orchestration loop.
+** Ollama Client
++ Encodes messages in JSON.
++ Sends the request to Ollama via HTTP POST (/api/chat).
++ Receives a JSON response.
+** Ollama / LLM
++ Produces either:
+  + a normal response,
+  + a native tool_call,
+  + or a fake JSON tool call in the content field.
+** Tool Manager
+ + Groups all saved tools.
+ + Finds the right tool to call, either:
+ + via tool_calls,
+ + via manual JSON found in content.
+** Tools
+Each tool is an independent module with:
++ a JSON schema
++ a Lisp handler
++ an entry in the *tools* list
+** Example
++ get_time
++ get_weather
+** External APIs
+The tools can call:
++ Open-Meteo (geocoding + weather)
++ The system time, etc.
+** Call Flow (Summary)
+1. The user sends a question to run-weather-agent.
+2. The agent adds the system prompt and messages.
+3. The messages are sent to Ollama.
+4. The model responds:
+   a. either with a tool_call
+   b. or with manual JSON
+   c. or with a classic response.
+5. If a tool is detected:
+   1. The Tool Manager calls the tool handler.
+   2. The handler returns a structured response.
+6. The final result is returned to the user.
+
+* Graphic
+** Overview
+[[./images/SAITO-2025-11-19-0907.png]]
