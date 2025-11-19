@@ -1,0 +1,16 @@
+#+title: Saito agent
+* Agent in French
+** Usage
+#+begin_src emacs-lisp
+(ql:quickload "saito")
+(in-package :saito)
+
+(setf *agent-debug* nil)  ;; or t
+
+;; 1) Tool météo
+(run-weather-agent "Peux-tu me donner la météo actuelle à Paris ?")
+
+;; 2) Tool temps
+(run-weather-agent "Utilise ton outil get_time pour me donner l'heure actuelle en UTC.")
+#+end_src
+** Installation

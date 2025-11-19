@@ -1,0 +1,10 @@
+#+title: Saito agent
+* Agent in French
+** Usage
+#+begin_src emacs-lisp
+(in-package :saito)
+
+(setf *agent-debug* nil)  ;; or t
+(run-weather-agent "Peux-tu me donner la météo actuelle à Paris ?")
+#+end_src
+** Installation
