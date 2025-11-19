@@ -16,4 +16,3 @@
 ;; Ask weather via the tool
 (run-weather-agent "Use your get_weather tool to give me the current weather in Paris.")
 #+end_src
-** Installation
