@@ -1,5 +1,5 @@
 #+title: Saito agent
-* Agent in French
+* Lisp Agent 
 ** Usage
 #+begin_src emacs-lisp
 (ql:quickload "saito")
