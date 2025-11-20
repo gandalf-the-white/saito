@@ -13,7 +13,7 @@
 
 (defmacro dbg (fmt &rest args)
   `(when *agent-debug*
-     (format *trace-output* "[AGENT] ~?" ,fmt (list ,@args))))
+     (format *trace-output* "  [AGENT]~% ~?" ,fmt (list ,@args))))
 
 (defun body->string (body)
   "Convertit le BODY retourné par drakma:http-request en string UTF-8.
