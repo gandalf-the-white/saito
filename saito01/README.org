@@ -7,4 +7,47 @@
 (setf *agent-debug* nil)  ;; or t
 (run-weather-agent "Peux-tu me donner la météo actuelle à Paris ?")
 #+end_src
-** Installation
+** UML Diagram
+#+begin_src plantuml :file ./images/diagram.svg
+@startuml WeatherAgentSequence
+
+actor Utilisateur
+participant "Agent LISP\n(saito)" as agent
+participant "Ollama\n(llama3.2)" as ollama
+participant "Open-Meteo\n(Geocoding)" as geocoding
+participant "Open-Meteo\n(Forecast)" as forecast
+
+Utilisateur -> agent: "Peux-tu me donner\la météo actuelle à Paris ?"
+activate agent
+
+agent -> ollama: call-ollama(messages)
+activate ollama
+ollama --> agent: réponse avec tool_call\n("get_weather", {"city": "Paris"})
+deactivate ollama
+
+agent -> agent: handle-tool-call\n(exécute get_weather)
+activate agent
+agent -> geocoding: geocode-city("Paris")
+activate geocoding
+geocoding --> agent: (lat, lon, name, country, admin1, timezone)
+deactivate geocoding
+
+agent -> forecast: http-request(forecast?lat=...&lon=...)
+activate forecast
+forecast --> agent: {current_weather: {...}}
+deactivate forecast
+
+agent -> agent: formatte la réponse météo
+agent -> ollama: envoie le résultat du tool\n(role: "tool", content: "Météo pour Paris...")
+activate ollama
+ollama --> agent: réponse finale\n("Météo pour Paris : 15.5°C, vent 10 km/h...")
+deactivate ollama
+
+agent --> Utilisateur: "Météo pour Paris : 15.5°C,\nvent 10 km/h (direction 180°),\ncode météo 3."
+deactivate agent
+        
+@enduml
+#+end_src
+
+#+RESULTS:
+[[file:./images/diagram.svg]]
