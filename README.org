@@ -56,5 +56,5 @@ The tools can call:
 ** Overview
 #+caption: Workflow without MCP server
 #+name: fig:workflow
-#+attr_org: :width 50%
+#+attr_html: :width 50%
 [[./images/SAITO-2025-11-19-0907.png]]
