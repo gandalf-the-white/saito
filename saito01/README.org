@@ -8,7 +8,7 @@
 (run-weather-agent "Peux-tu me donner la météo actuelle à Paris ?")
 #+end_src
 ** UML Diagram
-#+begin_src plantuml :file ./images/diagram.svg :noweb yes
+#+begin_src plantuml :file ./images/diagram.svg :results silent :exports none
 @startuml WeatherAgentSequence
 
 actor Utilisateur
@@ -49,5 +49,4 @@ deactivate agent
 @enduml
 #+end_src
 
-#+RESULTS:
 [[file:./images/diagram.svg]]
