@@ -130,8 +130,8 @@ ExtLeft -[hidden]right- ExtRight
 ' --- Flots entre éléments ---
 ToolAgent -right[#DarkGreen]-> OLLAMA : tool call
 OLLAMA -left[#DarkBlue]-> ToolAgent : tool call
-ToolConf -right-> Tools
-DirectCall -right-> Tools
+ToolConf ..right-> Tools
+DirectCall ..right-> Tools
 
 Tools -down[#Orange]-> ExtLeft : direct call
 ExtRight -left-> ExtLeft : HTTP request
