@@ -53,7 +53,8 @@ The tools can call:
 6. The final result is returned to the user.
 
 * Graphic
-** Flow Diagram
+** Agent Flow Diagram 
+Just a flow diagram according to a simple agent
 #+begin_src plantuml :file ./images/diagram.svg :results silent :exports none
 @startuml WeatherAgentSequence
 
@@ -140,3 +141,120 @@ ExtRight -left-> ExtLeft : HTTP request
 #+end_src
 
 [[./images/function.svg]]
+
+** Client Flow Diagram
+#+begin_src plantuml :file ./images/client-diagram.svg :results silent :exports none
+@startuml
+actor User
+participant "Lisp client\n(run-mcp-ollama-session)" as Client
+participant "MCP server\n(*mcp-url*)" as MCP
+participant "Ollama\n(*ollama-url* /api/chat)" as Ollama
+
+== Initialisation ==
+User -> Client : user-input
+activate Client
+
+' Récupération des tools MCP
+Client -> MCP : JSON-RPC \"tools/list\"\n(mcp-tools-list → mcp-http-request → http-post-json)
+activate MCP
+MCP --> Client : result.tools
+deactivate MCP
+
+Client -> Client : mcp-tools->ollama-tools(tools)\n→ ollama-tools
+Client -> Client : construire messages\n(system + user)
+
+== Boucle principale ==
+loop Conversation
+  ' Appel du modèle Ollama
+  Client -> Ollama : POST /api/chat\n(call-ollama-with-tools → http-post-json)
+  activate Ollama
+  Ollama --> Client : message + content + tool_calls?
+  deactivate Ollama
+
+  alt tool_calls vide
+    Client --> User : content (réponse finale)
+    deactivate Client
+    break
+  else tool_calls présent
+    ' Exécution de chaque tool_call
+    loop pour chaque tool_call
+      Client -> Client : parse-arguments-maybe(arguments)
+
+      Client -> MCP : JSON-RPC \"tools/call\"\n(mcp-call-tool-text → mcp-http-request → http-post-json)
+      activate MCP
+      MCP --> Client : result.content[0].text
+      deactivate MCP
+
+      Client -> Client : push message 'tool'\n(role=tool, tool_name, content)\n→ maj de messages
+    end
+  end
+end
+
+@enduml
+#+end_src
+[[./images/client-diagram.svg]]
+** Server MCP Flow Diagram
+Just an overview without the /hunchentoot/ server, imagine 
+#+begin_src plantuml :file ./images/server-diagram.svg :results silent :exports none
+@startuml
+skinparam handwritten true
+
+actor "MCP Host\n(éditeur / IDE)" as Host
+participant "run-mcp-server\n(Lisp MCP tools server)" as Server
+participant "Open-Meteo\nAPIs" as OpenMeteo
+participant "Ollama\n(*ollama-url*)" as Ollama
+
+loop lecture lignes STDIN
+  Host -> Server : ligne JSON-RPC\ninitialize | tools/list | tools/call
+  activate Server
+
+  Server -> Server : handle-json-rpc-line(line)\nparse → method,id,params
+
+  alt method == "initialize"
+    Server -> Server : handle-initialize(id,params)
+    Server --> Host : JSON-RPC result\n(protocolVersion, capabilities, serverInfo)
+
+  else method == "tools/list"
+    Server -> Server : handle-tools-list(id,params)\nmap mcp-tool->json sur *mcp-tools*
+    Server --> Host : JSON-RPC result\n(liste des tools)
+
+  else method == "tools/call"
+    Server -> Server : handle-tools-call(id,params)\nfind-mcp-tool(name)
+
+    alt tool inconnu
+      Server --> Host : error -32602\n"Unknown tool"
+
+    else tool connu
+      Server -> Server : funcall mcp-tool-handler(tool,arguments)
+
+      alt tool == "get_time"
+        Server -> Server : current-time-string(timezone)\n→ texte horodaté
+
+      else tool == "get_weather"
+        Server -> Server : geocode-city(city)
+        Server -> OpenMeteo : HTTP GET /v1/search\nname=city,...
+        OpenMeteo --> Server : JSON lat,lon,timezone,...
+        Server -> OpenMeteo : HTTP GET /v1/forecast\nlat,lon,current_weather=1,...
+        OpenMeteo --> Server : JSON current_weather
+        Server -> Server : get-weather-from-api → résumé météo texte
+
+      else tool == "ollama_chat"
+        Server -> Ollama : POST /api/chat\nmodel=*ollama-model*, messages=[user prompt]
+        Ollama --> Server : JSON { message.content }
+        Server -> Server : call-ollama-chat → texte
+      end
+
+      Server --> Host : JSON-RPC result\ncontent[0].text, isError=false
+    end
+
+  else méthode inconnue
+    Server --> Host : error -32601\n"Unknown method"
+  end
+
+  deactivate Server
+end
+
+@enduml
+#+end_src
+
+[[./images/server-diagram.svg]]
