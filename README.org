@@ -195,6 +195,7 @@ end
 
 @enduml
 #+end_src
+
 [[./images/client-diagram.svg]]
 ** Server MCP Flow Diagram
 Just an overview without the /hunchentoot/ server, imagine 
