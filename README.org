@@ -1,5 +1,6 @@
 #+title: Readme
 * Introduction
+** Simple Agent
 Just to prove that we can use practice *LLM* with *LISP*. 
 The agent is composed of different stacks:
 + Client (run-weather-agent)
@@ -7,7 +8,10 @@ The agent is composed of different stacks:
 + Ollama / LLM
 + Tool Manager
 + Tool Manager
-
+** MCP Server
+The same objective with 2 parts
++ A server
++ A client
 * Explication
 ** Client (run-weather-agent)
 + Receives the user's question.
