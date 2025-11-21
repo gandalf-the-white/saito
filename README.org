@@ -57,6 +57,7 @@ The tools can call:
 Just a flow diagram according to a simple agent
 #+begin_src plantuml :file ./images/diagram.svg :results silent :exports none
 @startuml WeatherAgentSequence
+!option handwritten true
 
 actor Utilisateur
 participant "Agent LISP\n(saito)" as agent
