@@ -10,15 +10,14 @@
   :components ((:module "src"
                 :components
                 ((:file "package")
-                 (:file "config")
                  (:file "logging")
-                 (:file "utils")
                  (:file "http-utils")
-                 (:file "tools-core")
-                 (:file "tool-weather")
+                 (:file "tools-registry")
                  (:file "tool-time")
-                 (:file "ollama-client")
-                 (:file "agent"))))
+                 (:file "tool-weather")
+                 (:file "tool-ollama-chat")
+                 (:file "mcp-protocol")
+                 (:file "main"))))
   :description ""
   :in-order-to ((test-op (test-op "saito/tests"))))
 

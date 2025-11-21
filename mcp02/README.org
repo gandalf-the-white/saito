@@ -1,0 +1,97 @@
+#+title: Saito agent
+* Lisp MCP
+** Usage
+#+begin_src shell
+$ echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{"tools":{}},"clientInfo":{"name":"test-client","version":"0.0.1"}}}' \
+  | sbcl --script app.lisp
+#+end_src
+** Tool list
+#+begin_src shell
+$ echo '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}' \
+  | sbcl --script app.lisp
+#+end_src
+** Tool call get_time
+#+begin_src shell
+$ echo '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"get_time","arguments":{"timezone":"UTC"}}}' \
+  | sbcl --script app.lisp
+#+end_src
+** Tool call get_weather
+#+begin_src shell
+$ echo '{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"get_weather","arguments":{"city":"Paris"}}}' \
+  | sbcl --script app.lisp
+#+end_src
+** tool call ollama_chat
+#+begin_src shell
+$ echo '{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"ollama_chat","arguments":{"prompt":"Say hello in English."}}}' \
+  | sbcl --script app.lisp
+#+end_src
+* Client
+** Registry
+We just have to check if the directory is include in /asdf:*central-registry*/.
+#+begin_src emacs-lisp
+asdf:*central-registry*
+(#P"/Users/laurent/quicklisp/quicklisp/")
+#+end_src
+We must include the project directory
+#+begin_src emacs-lisp
+(push #P"/Users/laurent/project/server/" asdf:*central-registry*)
+#+end_src
+and finally
+#+begin_src emacs-lisp
+asdf:*central-registry*
+(#P"/Users/laurent/quicklisp/" #P"/Users/laurent/project/server/")
+#+end_src
+** Utilization
+Some example to do
+#+begin_src emacs-lisp
+(ql:quickload '(:mcp-ollama-server :jonathan))
+(load "/chemin/vers/mcp-ollama-client.lisp")
+
+(in-package :mcp-ollama-client)
+
+;; 1) Start server
+(defparameter *conn* (start-mcp-server))
+
+;; 2) Initialize MCP
+(mcp-init *conn*)
+;; => hash-table with "result" / "serverInfo" / "capabilities"
+
+;; 3) List tools
+(mcp-tools-list *conn*)
+;; => you should see get_time, get_weather, ollama_chat in the "tools" array
+
+;; 4) Call get_time
+(mcp-call-tool *conn* "get_time"
+               '(("timezone" . "UTC")))
+
+;; 5) Call get_weather
+(mcp-call-tool *conn* "get_weather"
+               '(("city" . "Paris")))
+
+;; 6) Call ollama_chat
+(mcp-call-tool *conn* "ollama_chat"
+               '(("prompt" . "Say hello from MCP Lisp client.")))
+
+;; 7) Stop server when done
+(stop-mcp-server *conn*)
+#+end_src
+** Just for fun
+If we want to read information on *REPL*.
+#+begin_src emacs-lisp
+(let* ((resp (mcp-call-tool *conn* "get_time" '(("timezone" . "UTC"))))
+       (result (gethash "result" resp)))
+  (gethash "content" result))
+#+end_src
+** Pretty easy
+#+begin_src emacs-lisp
+(defparameter *conn* (start-mcp-server))
+
+(mcp-init *conn*)   ;; obligatoire
+
+(mcp-call-text *conn* "get_time" '(("timezone" . "UTC")))
+#+end_src
+Or another example
+#+begin_src emacs-lisp
+(mcp-call-text *conn* "get_weather" '(("city" . "Paris")))
+(mcp-call-text *conn* "ollama_chat" '(("prompt" . "Say hello from Lisp.")))
+#+end_src

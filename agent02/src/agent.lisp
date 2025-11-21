@@ -36,3 +36,7 @@
                   (let ((tool-msg (handle-tool-call tc)))
                     (dbg "tool_msg = ~A" tool-msg)
                     (setf messages (append messages (list tool-msg))))))))))))
+
+(defun test ()
+  (run-weather-agent
+   "Peux-tu me donner la météo actuelle à Paris ?"))

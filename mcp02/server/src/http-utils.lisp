@@ -1,26 +1,25 @@
 (in-package :saito)
 
 (defun body->string (body)
-  "Convert the BODY returned by drakma:http-request into a UTF-8 string."
+  "Convert HTTP BODY (drakma) to UTF-8 string."
   (cond
     ((stringp body)
      body)
-    ;; 1D array of (unsigned-byte 8)
     ((and (arrayp body)
           (= (array-rank body) 1)
           (subtypep (array-element-type body) '(unsigned-byte 8)))
      (octets-to-string body :encoding :utf-8))
-    ;; simple-vector of integers (0..255)
     ((vectorp body)
      (map 'string #'code-char body))
     (t
      (error "Unsupported HTTP body type: ~S (~A)" body (type-of body)))))
 
 (defun http-get (url &key parameters)
-  "Simple GET, returns the response body as a string."
   (multiple-value-bind (body status headers uri stream)
-      (http-request url :method :get :parameters parameters
-                        :external-format-in :utf-8)
+      (http-request url
+                    :method :get
+                    :parameters parameters
+                    :external-format-in :utf-8)
     (declare (ignore headers uri stream))
     (dbg "HTTP GET ~A => ~A" url status)
     (when (>= status 400)
@@ -28,9 +27,9 @@
     (body->string body)))
 
 (defun http-post-json (url payload-alist)
-  "POST JSON to URL, return the response body as a string (UTF-8)."
-  (let* ((json (to-json payload-alist :from :alist)))
-    (dbg "HTTP POST JSON payload = ~A" json)
+  "POST JSON and return body as string."
+  (let ((json (to-json payload-alist :from :alist)))
+    (dbg "HTTP POST JSON to ~A: ~A" url json)
     (multiple-value-bind (body status headers uri stream)
         (http-request url
                       :method :post

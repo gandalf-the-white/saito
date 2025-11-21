@@ -1,8 +1,12 @@
-(defpackage saito
+(defpackage :saito
   (:use :cl)
   (:import-from :jonathan :parse :to-json)
-  (:import-from :drakma :http-request :url-encode)
-  (:import-from :babel :octets-to-string))
+  (:import-from :drakma :http-request)
+  (:import-from :babel :octets-to-string)
+  (:export
+   :run-mcp-server
+   :*ollama-url*
+   :*ollama-model*))
 
 (in-package :saito)
 

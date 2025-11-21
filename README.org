@@ -53,7 +53,7 @@ The tools can call:
 6. The final result is returned to the user.
 
 * Graphic
-** UML Diagram
+** Flow Diagram
 #+begin_src plantuml :file ./images/diagram.svg :results silent :exports none
 @startuml WeatherAgentSequence
 
@@ -97,7 +97,7 @@ deactivate agent
 
 [[file:./images/diagram.svg]]
 
-** Overview
+** Functional Diagram
 #+begin_src plantuml :file ./images/function.svg :results silent :exports none
 @startuml
 

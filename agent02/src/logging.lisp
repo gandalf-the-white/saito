@@ -4,4 +4,4 @@
 
 (defmacro dbg (fmt &rest args)
   `(when *agent-debug*
-     (format *trace-output* "[AGENT] ~?" ,fmt (list ,@args))))
+     (format *trace-output* " [AGENT]~% ~?" ,fmt (list ,@args))))

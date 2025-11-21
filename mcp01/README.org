@@ -1,0 +1,27 @@
+#+title: Saito agent
+* Lisp MCP
+** Usage
+#+begin_src shell
+$ echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{"tools":{}},"clientInfo":{"name":"test-client","version":"0.0.1"}}}' \
+  | sbcl --script app.lisp
+#+end_src
+** Tool list
+#+begin_src shell
+$ echo '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}' \
+  | sbcl --script app.lisp
+#+end_src
+** Tool call get_time
+#+begin_src shell
+$ echo '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"get_time","arguments":{"timezone":"UTC"}}}' \
+  | sbcl --script app.lisp
+#+end_src
+** Tool call get_weather
+#+begin_src shell
+$ echo '{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"get_weather","arguments":{"city":"Paris"}}}' \
+  | sbcl --script app.lisp
+#+end_src
+** tool call ollama_chat
+#+begin_src shell
+$ echo '{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"ollama_chat","arguments":{"prompt":"Say hello in English."}}}' \
+  | sbcl --script app.lisp
+#+end_src

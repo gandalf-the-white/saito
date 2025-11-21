@@ -10,7 +10,7 @@
          (body-str (http-get base :parameters params))
          (data     (parse body-str :as :hash-table))
          (results  (gethash "results" data)))
-    (dbg "Open-Meteo geocode body = ~A" body-str)
+    (dbg "Geocoding response: ~A" body-str)
     (if (and results (plusp (length results)))
         (let* ((first (cond
                         ((vectorp results) (aref results 0))
@@ -26,7 +26,7 @@
         (values nil nil nil nil nil nil))))
 
 (defun get-weather-from-api (city)
-  "Return a short English sentence describing the current weather in CITY using Open-Meteo."
+  "Return a short English weather description for CITY using Open-Meteo."
   (multiple-value-bind (lat lon name country admin1 timezone)
       (geocode-city city)
     (unless lat
@@ -38,7 +38,7 @@
            (body-str (http-get url))
            (data     (parse body-str :as :hash-table))
            (current  (gethash "current_weather" data)))
-      (dbg "Open-Meteo forecast body = ~A" body-str)
+      (dbg "Forecast response: ~A" body-str)
       (unless current
         (return-from get-weather-from-api
           (format nil "Could not retrieve current weather for ~A." (or name city))))
@@ -57,30 +57,23 @@
                 winddir
                 weathercode)))))
 
-(defparameter *weather-tool-schema*
-  '(("type" . "function")
-    ("function" .
-     (("name" . "get_weather")
-      ("description" . "Get the current weather for a given city using Open-Meteo.")
-      ("parameters" .
-       (("type" . "object")
-        ("required" "city")
-        ("properties" .
-         (("city" .
-                  (("type" . "string")
-                   ("description" . "City name, for example \"Paris\".")))))))))))
+(defun tool-get-weather (args-ht)
+  "MCP tool handler for get_weather."
+  (let ((city (or (and args-ht (gethash "city" args-ht))
+                  (and args-ht (gethash "location" args-ht))
+                  "Paris")))
+    (get-weather-from-api city)))
 
-
-(defun make-weather-tool ()
-  (make-instance 'tool
-                 :name "get_weather"
-                 :schema *weather-tool-schema*
-                 :handler
-                 (lambda (args-ht)
-                   (let ((city (gethash "city" args-ht)))
-                     (let ((result (get-weather-from-api city)))
-                       `(("role" . "tool")
-                         ("tool_name" . "get_weather")
-                         ("content" . ,result)))))))
-
-(register-tool (make-weather-tool))
+(register-mcp-tool
+ (make-mcp-tool
+  :name "get_weather"
+  :title "Weather Information"
+  :description "Get the current weather from Open-Meteo for a given city."
+  :input-schema
+  '(("type" . "object")
+    ("properties" .
+     (("city" .
+       (("type" . "string")
+        ("description" . "City name, for example \"Paris\".")))))
+    ("required" . ("city")))
+  :handler #'tool-get-weather))
