@@ -101,6 +101,7 @@ deactivate agent
 ** Functional Diagram
 #+begin_src plantuml :file ./images/function.svg :results silent :exports none
 @startuml
+!option handwritten true
 
 rectangle "Agent" as Agent {
   rectangle "Tool-Using\nAgent" as ToolAgent #LightGreen
@@ -145,6 +146,8 @@ ExtRight -left-> ExtLeft : HTTP request
 ** Client Flow Diagram
 #+begin_src plantuml :file ./images/client-diagram.svg :results silent :exports none
 @startuml
+!option handwritten true
+
 actor User
 participant "Lisp client\n(run-mcp-ollama-session)" as Client
 participant "MCP server\n(*mcp-url*)" as MCP
