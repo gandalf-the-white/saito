@@ -59,41 +59,62 @@ Just a flow diagram according to a simple agent
 @startuml WeatherAgentSequence
 !option handwritten true
 
-actor Utilisateur
-participant "Agent LISP\n(saito)" as agent
-participant "Ollama\n(llama3.2)" as ollama
-participant "Open-Meteo\n(Geocoding)" as geocoding
-participant "Open-Meteo\n(Forecast)" as forecast
+actor "MCP Host\n(IDE / éditeur)" as Host
+participant "run-mcp-server\n(boucle JSON-RPC)" as Server
+participant "Open-Meteo\nAPI" as Meteo
+participant "Ollama\n*ollama-url*" as Ollama
 
-Utilisateur -> agent: "Peux-tu me donner\la météo actuelle à Paris ?"
-activate agent
+== Boucle principale ==
+loop jusqu'à EOF sur STDIN
+  Host -> Server : ligne JSON-RPC (JSON texte)
+  activate Server
 
-agent -> ollama: call-ollama(messages)
-activate ollama
-ollama --> agent: réponse avec tool_call\n("get_weather", {"city": "Paris"})
-deactivate ollama
+  Server -> Server : handle-json-rpc-line(line)\nparse (jonathan:parse)
 
-agent -> agent: handle-tool-call\n(exécute get_weather)
-activate agent
-agent -> geocoding: geocode-city("Paris")
-activate geocoding
-geocoding --> agent: (lat, lon, name, country, admin1, timezone)
-deactivate geocoding
+  alt method == "initialize"
+    Server -> Server : handle-initialize(id, params)\nserverInfo + capabilities
+    Server -> Host : write-json-response(result)
+  
+  else method == "tools/list"
+    Server -> Server : handle-tools-list(id, params)\n(map mcp-tool->json *mcp-tools*)
+    Server -> Host : write-json-response(result)
 
-agent -> forecast: http-request(forecast?lat=...&lon=...)
-activate forecast
-forecast --> agent: {current_weather: {...}}
-deactivate forecast
+  else method == "tools/call"
+    Server -> Server : handle-tools-call(id, params)\n(find-mcp-tool name)
 
-agent -> agent: formatte la réponse météo
-agent -> ollama: envoie le résultat du tool\n(role: "tool", content: "Météo pour Paris...")
-activate ollama
-ollama --> agent: réponse finale\n("Météo pour Paris : 15.5°C, vent 10 km/h...")
-deactivate ollama
+    alt tool inconnu
+      Server -> Server : make-error-response(-32602, "Unknown tool")
+      Server -> Host : write-json-response(error)
 
-agent --> Utilisateur: "Météo pour Paris : 15.5°C,\nvent 10 km/h (direction 180°),\ncode météo 3."
-deactivate agent
-        
+    else tool trouvé
+      alt name == "get_time"
+        Server -> Server : tool-get-time(args)\n→ current-time-string(timezone)
+
+      else name == "get_weather"
+        Server -> Server : tool-get-weather(args)\n(city, lat, lon)
+        Server -> Server : geocode-city(city) (si lat/lon manquants)
+        Server -> Meteo : http-get /v1/search\n(geocode-city)
+        Meteo --> Server : body (coordonnées)
+        Server -> Meteo : http-get /v1/forecast\n(get-weather-from-api)
+        Meteo --> Server : body (current_weather)
+        Server -> Server : get-weather-from-api\n→ texte météo
+
+      else name == "ollama_chat"
+        Server -> Server : tool-ollama-chat(args)\n(extrait prompt)
+        Server -> Ollama : http-post-json *ollama-url*\n(call-ollama-chat)
+        Ollama --> Server : réponse modèle (message.content)
+      end
+
+      Server -> Host : write-json-response(result)
+    end
+
+  else méthode inconnue
+    Server -> Server : make-error-response(-32601,"Unknown method")
+    Server -> Host : write-json-response(error)
+  end
+
+  deactivate Server
+end        
 @enduml
 #+end_src
 
