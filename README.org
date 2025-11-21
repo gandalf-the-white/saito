@@ -197,7 +197,7 @@ end
 Just an overview without the /hunchentoot/ server, imagine 
 #+begin_src plantuml :file ./images/server-diagram.svg :results silent :exports none
 @startuml
-skinparam handwritten true
+!option handwritten true
 
 actor "MCP Host\n(éditeur / IDE)" as Host
 participant "run-mcp-server\n(Lisp MCP tools server)" as Server
