@@ -1,0 +1,62 @@
+#+title: MCP client
+
+* Introduction
+
+* How to
+** Run by REPL
+#+begin_src emacs-lisp
+(ql:quickload "mcp-client")
+(in-package :mcp-client)
+
+;; s'assurer que le serveur MCP HTTP tourne sur 8000 :
+;; (dans un autre REPL) (mcp-ollama-server:start-mcp-http-server :port 8000)
+
+(setf *mcp-url* "http://localhost:8000/mcp")
+(setf *ollama-url* "http://localhost:11434/api/chat")
+(setf *ollama-model* "llama3.2")
+
+(run-mcp-ollama-session
+ "Use your tools to tell me the current time in UTC, then the weather in Paris.")
+#+end_src
+
+or use the loop
+#+begin_src emacs-lisp
+(ql:quickload "mcp-client")
+(in-package :mcp-client)
+
+;; adapte au besoin :
+(setf *mcp-url* "http://localhost:8000/mcp")
+(setf *ollama-url* "http://localhost:11434/api/chat")
+(setf *ollama-model* "llama3.2")
+
+(run-mcp-ollama-repl)
+#+end_src
+** Example
+#+begin_src shell
+MCP/Ollama interactive session.
+Commands: :tools, :q, :quit, :exit
+
+mcp> Use your tools to tell me the current time in UTC.
+[ANSWER] Current time (UTC): 2025-11-21 15:58:03
+
+mcp> What is the weather in Paris using your tools?
+[ANSWER] Weather in Paris (...) ...
+
+mcp> :tools
+Outils MCP disponibles :
+ - get_time
+ - get_weather
+ - ollama_chat
+
+mcp> :q
+
+Bye.
+#+end_src
+** Run by script
+#+begin_src shell
+$ sbcl \
+  --eval '(ql:quickload "mcp-client")' \
+  --eval '(saito-client:main)' \
+  --noinform --disable-debugger
+#+end_src
+We probably add in the /asdf:*registry*/ our directory just before.
