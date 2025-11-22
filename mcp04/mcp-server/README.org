@@ -2,4 +2,75 @@
 #+author: Spike Spiegel
 
 * Introduction
+** REPL
+#+begin_src emacs-lisp
+(ql:quickload '(:drakma :jonathan :babel))
+(load "/chemin/vers/ollama-mcp-http-client.lisp")
+(in-package :ollama-mcp-http-client)
+
+;; adapte l’URL de ton serveur MCP HTTP :
+(setf *mcp-url* "http://localhost:8000/mcp")
+;; adapte si besoin l’URL/model ollama
+(setf *ollama-url* "http://localhost:11434/api/chat")
+(setf *ollama-model* "llama3.2")
+
+;; puis lance une session :
+(run-mcp-ollama-session
+ "Use your tools to tell me the current time in UTC, then the weather in Paris.")
+#+end_src
+** Process
+The flow will be:
+1. The client calls the MCP server via HTTP → tools/list.
+2. It transforms these tools into tools for Ollama.
+3. It sends the question to llama3.2 via /api/chat.
+4. If the model produces tool_calls:
+   + the client calls tools/call on the MCP server for each tool,
+   + inserts the results into the history,
+   + restarts Ollama,
+   + until there are no more tool_calls.
+5. The function returns the final response (string).
+
+* Server
+** Start
+We start the /server/
+#+begin_src emacs-lisp
+(ql:quickload "saito")
+(in-package :saito)
+
+;; optionnel : couper les logs si tu veux
+(setf *debug* nil)
+
+(start-mcp-http-server :port 8000)
+#+end_src
+** Stop
+To stop the server without debug message
+#+begin_src emacs-lisp
+(ignore-errors (stop-mcp-http-server))
+#+end_src
+** Check
+Just to check the server
+#+begin_src shell
+$ curl -X POST http://localhost:8000/mcp \
+     -H 'Content-Type: application/json' \
+     -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":[]}'
+#+end_src
+* Client
+** Start
+#+begin_src emacs-lisp
+(setf ollama-mcp-http-client:*mcp-url* "http://localhost:8000/mcp")
+;; ou dans ton package client:
+(setf *mcp-url* "http://localhost:8000/mcp")
+#+end_src
+** Check
+#+begin_src emacs-lisp
+(in-package :ollama-mcp-http-client)   ;; ou :saito-client
+(run-mcp-ollama-session "Use your tools to tell me the current time in UTC.")
+#+end_src
+** Workflow
+The flow will be:
+1. Client → tools/list via HTTP → MCP HTTP server → Lisp tools
+2. Client calls Ollama with tools = MCP schemas
+3. Llama3.2 produces tool_calls
+4. Client → tools/call via HTTP for each tool → MCP HTTP server → Lisp tool (get_time, get_weather, ollama_chat)
+5. Client returns Llama's final response to the user
 
