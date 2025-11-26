@@ -11,9 +11,9 @@
 !define FUNCTION_COLOR #FFF9C4
 
 
-package "mcp-server" {
+package "mcp-server" <<Package>> PACKAGE_COLOR {
   
-  STRUCT mcp_tool {
+  STRUCT mcp_tool CLASS_COLOR {
     + name : string
     + title : string
     + description : string
@@ -21,7 +21,7 @@ package "mcp-server" {
     + handler : function
   }
   
-  class ToolsRegistry {
+  class ToolsRegistry CLASS_COLOR {
     + *mcp-tools* : list<mcp-tool>
     --
     + register-mcp-tool(tool) : mcp-tool
@@ -29,7 +29,7 @@ package "mcp-server" {
     + mcp-tool->json(tool) : alist
   }
   
-  class MCPProtocol {
+  class MCPProtocol CLASS_COLOR {
     --
     + write-json-response(alist) : void
     + make-error-response(id, code, message) : alist
@@ -40,12 +40,12 @@ package "mcp-server" {
     + handle-json-rpc-line(line) : void
   }
   
-  class MainServer {
+  class MainServer CLASS_COLOR {
     --
     + run-mcp-server() : void
   }
   
-  class HTTPServer {
+  class HTTPServer CLASS_COLOR {
     + *mcp-http-server* : acceptor
     --
     + mcp-http-handler() : string
@@ -53,20 +53,20 @@ package "mcp-server" {
     + stop-mcp-http-server() : void
   }
   
-  class HTTPUtils {
+  class HTTPUtils CLASS_COLOR {
     --
     + body->string(body) : string
     + http-get(url, parameters) : string
     + http-post-json(url, payload-alist) : string
   }
   
-  class Logging {
+  class Logging CLASS_COLOR {
     + *debug* : boolean
     --
     + dbg(fmt, args) : void
   }
   
-  class Package {
+  class Package CLASS_COLOR {
     + *ollama-url* : string
     + *ollama-model* : string
   }
