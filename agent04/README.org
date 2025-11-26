@@ -20,6 +20,10 @@
 #+begin_src plantuml :file ./images/diagram.svg :results silent :exports none
 @startuml Saito Agent System
 
+!define PACKAGE_COLOR #E8F5E9
+!define CLASS_COLOR #BBDEFB
+!define FUNCTION_COLOR #FFF9C4
+
 ' Configuration
 skinparam classAttributeIconSize 0
 skinparam class {
@@ -28,6 +32,8 @@ skinparam class {
     BackgroundColor<<tool>> LightGreen
     BackgroundColor<<util>> LightGray
 }
+
+package "agent" <<Package>> PACKAGE_COLOR {
 
 ' Core Classes
 class Tool {
@@ -140,7 +146,7 @@ note bottom of ToolRegistry
   all registered tools and
   system configuration.
 end note
-
+}
 @enduml
 #+end_src
 
