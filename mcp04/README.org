@@ -1,6 +1,7 @@
 #+title: MCP and client
 * Server
 ** UML Diagram
+
 #+begin_src plantuml :file ./images/server.svg :results silent :exports none
 @startuml MCP Server Architecture
 
