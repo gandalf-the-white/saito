@@ -6,6 +6,10 @@
 
 !define STRUCT class
 !define FUNCTION class
+!define PACKAGE_COLOR #E8F5E9
+!define CLASS_COLOR #BBDEFB
+!define FUNCTION_COLOR #FFF9C4
+
 
 package "mcp-server" {
   
