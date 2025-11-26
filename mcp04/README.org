@@ -4,12 +4,12 @@
 #+begin_src plantuml :file ./images/server.svg :results silent :exports none
 @startuml MCP Server Architecture
 
-!define STRUCT class
-!define FUNCTION class
 !define PACKAGE_COLOR #E8F5E9
 !define CLASS_COLOR #BBDEFB
 !define FUNCTION_COLOR #FFF9C4
 
+!define STRUCT class
+!define FUNCTION class
 
 package "mcp-server" <<Package>> PACKAGE_COLOR {
   
