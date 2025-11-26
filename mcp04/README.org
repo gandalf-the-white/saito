@@ -111,7 +111,6 @@ package "mcp-server" {
 @enduml
 #+end_src
 
-#+RESULTS:
 [[file:./images/server.svg]]
 
 
