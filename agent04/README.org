@@ -16,3 +16,132 @@
 ;; Ask weather via the tool
 (run-weather-agent "Use your get_weather tool to give me the current weather in Paris.")
 #+end_src
+** UML Diagram
+#+begin_src plantuml :file ./images/diagram.svg :results silent :exports none
+@startuml Saito Agent System
+
+' Configuration
+skinparam classAttributeIconSize 0
+skinparam class {
+    BackgroundColor<<config>> LightYellow
+    BackgroundColor<<core>> LightBlue
+    BackgroundColor<<tool>> LightGreen
+    BackgroundColor<<util>> LightGray
+}
+
+' Core Classes
+class Tool {
+  - name : string
+  - schema : alist
+  - handler : function
+  --
+  + tool-name() : string
+  + tool-schema() : alist
+  + tool-handler() : function
+}
+
+' Global State
+class ToolRegistry <<core>> {
+  {static} *tools* : list<Tool>
+  {static} *ollama-url* : string
+  {static} *ollama-model* : string
+  {static} *agent-system-prompt* : string
+  {static} *agent-debug* : boolean
+  --
+  {static} + register-tool(tool: Tool)
+  {static} + find-tool-by-name(name: string) : Tool
+  {static} + tools-schemas() : list
+}
+
+' Agent Logic
+class Agent <<core>> {
+  --
+  + run-weather-agent(user-input: string) : string
+  - handle-tool-call(tool-call: hash-table) : alist
+  - ensure-list(x) : list
+}
+
+' Ollama Client
+class OllamaClient <<core>> {
+  --
+  + call-ollama(messages: list) : hash-table
+  + test-ollama-simple() : string
+}
+
+' HTTP Utilities
+class HttpUtils <<util>> {
+  --
+  + http-get(url: string, parameters: alist) : string
+  + http-post-json(url: string, payload: alist) : string
+  - body->string(body) : string
+}
+
+' Utilities
+class Utils <<util>> {
+  --
+  + extract-json-substring(s: string) : string
+  + try-manual-tool-json(content: string) : string
+}
+
+' Logging
+class Logger <<util>> {
+  --
+  + dbg(fmt: string, args: list) : void
+}
+
+' Concrete Tools
+class TimeTool <<tool>> {
+  {static} *time-tool-schema* : alist
+  --
+  + current-time-string(timezone: string) : string
+  + make-time-tool() : Tool
+}
+
+class WeatherTool <<tool>> {
+  {static} *weather-tool-schema* : alist
+  --
+  + geocode-city(city: string) : values
+  + get-weather-from-api(city: string) : string
+  + make-weather-tool() : Tool
+}
+
+' Relationships
+ToolRegistry "1" o-- "*" Tool : manages
+Agent ..> ToolRegistry : uses
+Agent ..> OllamaClient : uses
+Agent ..> Utils : uses
+Agent ..> Logger : uses
+
+OllamaClient ..> HttpUtils : uses
+OllamaClient ..> ToolRegistry : uses
+OllamaClient ..> Logger : uses
+
+TimeTool ..> Tool : creates
+WeatherTool ..> Tool : creates
+WeatherTool ..> HttpUtils : uses
+
+TimeTool ..> ToolRegistry : registers to
+WeatherTool ..> ToolRegistry : registers to
+
+note right of Agent
+  Main entry point for agent execution.
+  Manages conversation loop with
+  Ollama and tool execution.
+end note
+
+note right of Tool
+  Base class for all tools.
+  Each tool has a name, JSON schema,
+  and a handler function.
+end note
+
+note bottom of ToolRegistry
+  Global registry maintaining
+  all registered tools and
+  system configuration.
+end note
+
+@enduml
+#+end_src
+
+[[file:images/diagram.svg]]

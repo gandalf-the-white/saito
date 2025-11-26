@@ -1,0 +1,240 @@
+#+title: MCP and client
+* Server
+** UML Diagram
+#+begin_src plantuml :file ./images/server.svg :results silent :exports none
+@startuml MCP Server Architecture
+
+!define STRUCT class
+!define FUNCTION class
+
+package "mcp-server" {
+  
+  STRUCT mcp_tool {
+    + name : string
+    + title : string
+    + description : string
+    + input-schema : hash-table
+    + handler : function
+  }
+  
+  class ToolsRegistry {
+    + *mcp-tools* : list<mcp-tool>
+    --
+    + register-mcp-tool(tool) : mcp-tool
+    + find-mcp-tool(name) : mcp-tool
+    + mcp-tool->json(tool) : alist
+  }
+  
+  class MCPProtocol {
+    --
+    + write-json-response(alist) : void
+    + make-error-response(id, code, message) : alist
+    + handle-initialize(id, params) : alist
+    + handle-tools-list(id, params) : alist
+    + handle-tools-call(id, params) : alist
+    + handle-json-rpc-request(json-string) : alist
+    + handle-json-rpc-line(line) : void
+  }
+  
+  class MainServer {
+    --
+    + run-mcp-server() : void
+  }
+  
+  class HTTPServer {
+    + *mcp-http-server* : acceptor
+    --
+    + mcp-http-handler() : string
+    + start-mcp-http-server(port) : acceptor
+    + stop-mcp-http-server() : void
+  }
+  
+  class HTTPUtils {
+    --
+    + body->string(body) : string
+    + http-get(url, parameters) : string
+    + http-post-json(url, payload-alist) : string
+  }
+  
+  class Logging {
+    + *debug* : boolean
+    --
+    + dbg(fmt, args) : void
+  }
+  
+  class Package {
+    + *ollama-url* : string
+    + *ollama-model* : string
+  }
+  
+  ' Relations
+  ToolsRegistry "1" *-- "0..*" mcp_tool : manages
+  
+  MCPProtocol ..> ToolsRegistry : uses
+  MCPProtocol ..> Logging : uses
+  
+  MainServer ..> MCPProtocol : uses
+  MainServer ..> Logging : uses
+  
+  HTTPServer ..> MCPProtocol : uses
+  HTTPServer ..> Logging : uses
+  
+  HTTPUtils ..> Logging : uses
+  
+  mcp_tool ..> HTTPUtils : may use
+  
+  Package ..> MainServer : exports
+  Package ..> HTTPServer : provides config
+  
+  note right of mcp_tool
+    Structure de données
+    représentant un outil MCP
+  end note
+  
+  note right of MCPProtocol
+    Gère le protocole JSON-RPC 2.0
+    pour MCP (Model Context Protocol)
+  end note
+  
+  note right of MainServer
+    Point d'entrée STDIN/STDOUT
+    Lecture ligne par ligne
+  end note
+  
+  note right of HTTPServer
+    Point d'entrée HTTP
+    Endpoint: /mcp sur port 8000
+  end note
+
+}
+
+@enduml
+#+end_src
+
+#+RESULTS:
+[[file:./images/server.svg]]
+
+
+* Client
+** UML Diagram
+#+begin_src plantuml :file ./images/client.svg :results silent :exports none
+@startuml MCP-Client-Architecture
+
+!define PACKAGE_COLOR #E8F5E9
+!define CLASS_COLOR #BBDEFB
+!define FUNCTION_COLOR #FFF9C4
+
+package "mcp-client" <<Package>> PACKAGE_COLOR {
+  
+  class "Configuration" <<Global Parameters>> {
+    +*ollama-url* : string
+    +*ollama-model* : string
+    +*mcp-url* : string
+    +*agent-system-prompt* : string
+    +*debug* : boolean
+    +*mcp-next-id* : integer
+  }
+  
+  class "REPL" <<Interface>> CLASS_COLOR {
+    +run-mcp-ollama-repl(prompt)
+    +main()
+    -handle-user-input(line)
+    -handle-commands(command)
+  }
+  
+  class "Agent" <<Controller>> CLASS_COLOR {
+    +run-mcp-ollama-session(user-input) : string
+    +mcp-print-tools()
+    -build-message-history(messages)
+    -process-tool-calls(tool-calls)
+    -execute-tool-call(tool-call)
+  }
+  
+  class "OllamaClient" <<API Client>> CLASS_COLOR {
+    +call-ollama-with-tools(messages, tools) : hash-table
+    +mcp-tools->ollama-tools(mcp-tools) : list
+    +parse-arguments-maybe(args) : hash-table
+    +ensure-list(x) : list
+  }
+  
+  class "MCPHttpClient" <<API Client>> CLASS_COLOR {
+    +mcp-http-request(method, params) : hash-table
+    +mcp-tools-list() : list
+    +mcp-tools-list-text(conn-ignored) : list
+    +mcp-call-tool-text(name, args-alist) : string
+    -mcp-next-id() : integer
+  }
+  
+  class "HttpUtils" <<Utility>> CLASS_COLOR {
+    +http-post-json(url, payload-alist) : string
+    +body->string(body) : string
+    -handle-http-response(status, body)
+  }
+  
+  class "Logging" <<Utility>> CLASS_COLOR {
+    +dbg(fmt, args)
+  }
+  
+  interface "External: Ollama API" <<External Service>> {
+    POST /api/chat
+    --
+    +model : string
+    +messages : array
+    +tools : array
+    +stream : boolean
+  }
+  
+  interface "External: MCP Server" <<External Service>> {
+    POST /mcp
+    --
+    JSON-RPC 2.0
+    +tools/list
+    +tools/call
+  }
+  
+  ' Relations
+  REPL --> Agent : uses
+  REPL --> MCPHttpClient : :tools command
+  
+  Agent --> OllamaClient : calls LLM
+  Agent --> MCPHttpClient : retrieves/calls tools
+  Agent ..> Configuration : reads
+  Agent ..> Logging : logs
+  
+  OllamaClient --> HttpUtils : HTTP POST
+  OllamaClient ..> Configuration : reads *ollama-url*
+  OllamaClient ..> Logging : logs
+  
+  MCPHttpClient --> HttpUtils : HTTP POST
+  MCPHttpClient ..> Configuration : reads *mcp-url*
+  MCPHttpClient ..> Logging : logs
+  
+  HttpUtils ..> Logging : logs
+  
+  OllamaClient ..> "External: Ollama API" : REST API
+  MCPHttpClient ..> "External: MCP Server" : JSON-RPC
+  
+  ' Dependencies externes
+  note right of HttpUtils
+    Dependencies:
+    - drakma (HTTP)
+    - jonathan (JSON)
+    - babel (UTF-8)
+  end note
+}
+
+' Flux de données principal
+note bottom of Agent
+  Main Flow:
+  1. User input → REPL
+  2. REPL → Agent (run-mcp-ollama-session)
+  3. Agent → MCP (get tools list)
+  4. Agent → Ollama (chat with tools)
+  5. If tool_calls → MCP (execute)
+  6. Loop until final answer
+end note
+
+@enduml
+#+end_src
+
+[[file:images/client.svg]]

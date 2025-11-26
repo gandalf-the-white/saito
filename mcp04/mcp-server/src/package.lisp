@@ -3,8 +3,10 @@
   (:import-from :jonathan :parse :to-json)
   (:import-from :drakma :http-request)
   (:import-from :babel :octets-to-string)
-  (:export :run-mcp-server :*ollama-url*
-           :*ollama-model*))
+  (:export
+   :run-mcp-server
+   :*ollama-url*
+   :*ollama-model*))
 
 (in-package :mcp-server)
 

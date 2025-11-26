@@ -2,8 +2,8 @@
 
 (defsystem "saito"
   :version "0.0.1"
-  :author ""
-  :license ""
+  :author "spike spiegel"
+  :license "MIT"
   :depends-on (:drakma
                :jonathan
                :babel)
