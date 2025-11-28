@@ -83,4 +83,4 @@ IMPORTANT RULES:
                                     ("tool_name" . ,fn-name)
                                     ("content" . ,tool-result))
                                   messages)
-                            (setf messages (nreverse messages))))))))))))))
+                            (setf messages (nreverse messages)))))))))))))))
