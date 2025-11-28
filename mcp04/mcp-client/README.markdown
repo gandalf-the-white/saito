@@ -1,5 +1,0 @@
-# Client
-
-## Usage
-
-## Installation
