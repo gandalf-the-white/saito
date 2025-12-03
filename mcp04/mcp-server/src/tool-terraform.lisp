@@ -42,10 +42,11 @@ resource \"proxmox_vm_qemu\" \"~A\" {
   os_type = \"cloud-init\"
 }"
                           vm-name vm-name target-node image cores memory disk-size bridge)))
-    ;; (with-open-file (out path :direction :output :if-exists :supersede :if-does-not-exist :create)
-    ;; (format out "~A" content))
-    ;; (dbg "Fichier ecrit: ~A (~A octets)" path (length content))
-    (format nil "Fichier ecrit: ~A (~A octets)" path (length content))))
+    (with-open-file (out path :direction :output :if-exists :supersede :if-does-not-exist :create)
+      (format out "~A" content))
+    (dbg "Fichier ecrit: ~A (~A octets)" path (length content))
+    (format nil "~A" content)))
+
 
 (register-mcp-tool
  (make-instance 'mcp-tool

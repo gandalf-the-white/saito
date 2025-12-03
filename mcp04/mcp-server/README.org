@@ -74,3 +74,18 @@ The flow will be:
 4. Client → tools/call via HTTP for each tool → MCP HTTP server → Lisp tool (get_time, get_weather, ollama_chat)
 5. Client returns Llama's final response to the user
 
+* Todo
+Tool “terraform-apply”
++ pour exécuter directement terraform init && terraform apply après génération du .tf.
+
+Tool “terraform-destroy”
++ pour supprimer une VM avec le même fichier .tf.
+
+Validation des arguments via input-schema
++ refuser une requête si un paramètre essentiel manque.
+
+Stockage structuré des scripts Terraform
++ par ex. /var/mcp/terraform/<vm_name>/main.tf.
+
+Gestion asynchrone des jobs
++ ton agent pourrait lancer la création et venir lire le statut du job plus tard.

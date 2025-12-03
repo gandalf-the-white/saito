@@ -17,6 +17,11 @@
 
 (run-mcp-ollama-session
  "Use your tools to tell me the current time in UTC, then the weather in Paris.")
+(run-mcp-ollama-session
+ "Utilise tes outils pour creer une machine virtuelle sur mon cluster Proxmox appelée web01 avec 4 Go de RAM, 2 CPU, un disque de 20 Go, et connectée au bridge vmbr0.")
+(run-mcp-ollama-session
+ "Appelle l’outil terraform-proxmox avec les paramètres suivants :
+vm_name=debug-vm, cores=1, memory=1024, disk_size=5G, bridge=vmbr3")
 #+end_src
 
 or use the loop
