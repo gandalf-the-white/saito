@@ -1,7 +1,19 @@
 (in-package :mcp-server)
 
-(defstruct mcp-tool
-  name title description input-schema handler)
+;; (defstruct mcp-tool
+;; name title description input-schema handler)
+
+(defclass mcp-tool ()
+  ((name :initarg :name
+         :accessor mcp-tool-name)
+   (title :initarg :title
+          :accessor mcp-tool-title)
+   (description :initarg :description
+                :accessor mcp-tool-description)
+   (input-schema :initarg :input-schema
+                 :accessor mcp-tool-input-schema)
+   (handler :initarg :handler
+            :accessor mcp-tool-handler)))
 
 (defparameter *mcp-tools* nil
   "Registered MCP tools (instances of MCP-TOOL).")

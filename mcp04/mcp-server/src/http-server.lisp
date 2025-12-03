@@ -11,7 +11,7 @@ Read the body JSON, call handle-json-rpc-request, send back JSON"
     (setf (tbnl:content-type*) "application/json")
     resp-json))
 
-(defun start-mcp-http-server(&key (port 8000))
+(defun start-mcp-http-server(&key (port *mcp-port*)(host *mcp-host*))
   "Start the HTTP MCP server."
   (setf tbnl:*dispatch-table*
         (list (tbnl:create-prefix-dispatcher "/mcp" #'mcp-http-handler)))
@@ -19,7 +19,7 @@ Read the body JSON, call handle-json-rpc-request, send back JSON"
         (tbnl:start
          (make-instance 'easy-routes:easy-routes-acceptor
                         :port port
-                        :address "127.0.0.1")))
+                        :address host)))
   (dbg "MCP HTTP server started on port ~A" port)
   *mcp-http-server*)
 

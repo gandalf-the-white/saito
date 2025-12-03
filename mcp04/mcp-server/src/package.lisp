@@ -10,5 +10,18 @@
 
 (in-package :mcp-server)
 
-(defparameter *ollama-url* "http://localhost:11434/api/chat")
-(defparameter *ollama-model* "llama3.2")
+(defun getenv-or (name default)
+  (or (uiop:getenv name)
+      default))
+
+(defparameter *ollama-url*
+  (getenv-or "OLLAMA_URL" "http://localhost:11434/api/chat"))
+
+(defparameter *ollama-model*
+  (getenv-or "OLLAMA_MODEL" "llama3.2"))
+
+(defparameter *mcp-port*
+  (getenv-or "MCP_PORT" 8000))
+
+(defparameter *mcp-host*
+  (getenv-or "MCP_HOST" "0.0.0.0"))
