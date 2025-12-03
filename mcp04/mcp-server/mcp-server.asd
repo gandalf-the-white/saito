@@ -16,6 +16,7 @@
                  (:file "http-utils")
                  (:file "tools-registry")
                  (:file "tool-time")
+                 (:file "tool-terraform")
                  (:file "mcp-protocol")
                  (:file "http-server")
                  (:file "main"))))

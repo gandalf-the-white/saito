@@ -40,11 +40,15 @@
       (if (null tool)
           (make-error-response id -32602 (format nil "Unknown tool: ~A" name))
           (handler-case
-              (let* ((text-result (funcall (mcp-tool-handler tool) arguments))
+              (let* ((args-ht (if (hash-table-p arguments)
+                                  arguments
+                                  (json-object->hash-table arguments)))
+                     (text-result (funcall (mcp-tool-handler tool) args-ht))
                      (result `(("content" .
                                 ((( "type" . "text")
-                                  ("text" . ,text-result))))
+                                  ("text" . ,(princ-to-string text-result)))))
                                ("isError" . :false))))
+                (dbg "Return funcall: ~A" text-result)
                 `(("jsonrpc" . "2.0")
                   ("id"      . ,id)
                   ("result"  . ,result)))
@@ -86,3 +90,14 @@
   "Version STDIN/STDOUT (old), compatibility."
   (let ((resp (handle-json-rpc-request line)))
     (write-json-response resp)))
+
+(defun json-object->hash-table (obj)
+  "Convertit une alist JSON (clé . valeur) en hash-table Lisp."
+  (cond
+    ((hash-table-p obj) obj)
+    ((listp obj)
+     (let ((ht (make-hash-table :test 'equal)))
+       (dolist (pair obj)
+         (setf (gethash (car pair) ht) (cdr pair)))
+       ht))
+    (t (error "Invalid arguments format: ~A" obj))))

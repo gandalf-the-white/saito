@@ -2,8 +2,42 @@
 POST http://localhost:8000/mcp
 Content-Type: application/json
 {
-    "jsonrpc":"2.0",
-    "id":1,
-    "method":"tools/list",
-    "params":[]
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/list",
+  "params": []
+}
+
+# POST Terraform configuration
+POST http://localhost:8000/mcp/tools/call
+Content-Type: application/json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "get_time",
+    "arguments": {
+      "tz": "UTC"
+    }
+  }
+}
+
+# POST Terraform configuration
+POST http://localhost:8000/mcp/tools/call
+Content-Type: application/json
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "method": "tools/call",
+  "params": {
+    "name": "terraform-proxmox",
+    "arguments": {
+      "vm_name": "web01",
+      "cores": "4",
+      "memory": "4096",
+      "disk_size": "20G",
+      "bridge": "vmbr0"
+    }
+  }
 }
