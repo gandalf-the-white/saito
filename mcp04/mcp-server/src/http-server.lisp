@@ -20,6 +20,7 @@ Read the body JSON, call handle-json-rpc-request, send back JSON"
          (make-instance 'easy-routes:easy-routes-acceptor
                         :port port
                         :address host)))
+  (infor "MCP HTTP server started on port ~A" port)
   (dbg "MCP HTTP server started on port ~A" port)
   *mcp-http-server*)
 
@@ -28,4 +29,5 @@ Read the body JSON, call handle-json-rpc-request, send back JSON"
   (when *mcp-http-server*
     (tbnl:stop *mcp-http-server*)
     (setf *mcp-http-server* nil)
+    (infor "MCP HTTP server stopped")
     (dbg "MCP HTTP server stopped")))

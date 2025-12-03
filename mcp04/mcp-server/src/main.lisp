@@ -1,20 +1,19 @@
 (in-package :mcp-server)
 
-;; (defun run-mcp-server ()
-;;   "Run a simple MCP tools server over STDIN/STDOUT.
-;; Each incoming line is expected to be one JSON-RPC 2.0 request."
-;;   (dbg "Starting MCP Ollama server (mcp saito 0.1.0)...")
-;;   (loop
-;;     (let ((line (read-line *standard-input* nil nil)))
-;;       (if (null line)
-;;           (progn
-;;             (dbg "End of input, stopping MCP server.")
-;;             (return))
-;;           (let ((trimmed (string-trim '(#\Space #\Tab #\Newline #\Return) line)))
-;;             (when (> (length trimmed) 0)
-;;               (handle-json-rpc-line trimmed)))))))
+(defun main ()
+  (handler-case
+      (progn
+        (defparameter *debug* nil)
+        (start-mcp-http-server :port 8000) ;; our start-app, for example clack:clack-up
+        ;; let the webserver run,
+        ;; keep the server thread in the foreground:
+        ;; sleep for ± a hundred billion years.
+        (sleep 1000))
 
-(defun main()
-  (dbg "Starting MCP server on ~A:~A" *mcp-host* *mcp-port*)
-  (start-mcp-http-server)
-  (dbg "MCP server ready."))
+    ;; Catch a user's C-c
+    (#+sbcl sb-sys:interactive-interrupt
+     () (progn
+          (format *error-output* "Aborting.~&")
+          (stop-mcp-http-server)
+          (uiop:quit)))
+    (error (c) (format t "Woops, an unknown error occured:~&~a~&" c))))

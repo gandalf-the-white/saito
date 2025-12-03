@@ -18,10 +18,6 @@
 
 ;;; 4. Démarrer le serveur
 (let ((*package* (find-package :mcp-server)))
-  (defparameter mcp-server::*debug* t)
-  (mcp-server::start-mcp-http-server)
-  (format t "Server started~%")
-  (loop (sleep 1000)))
-
-;;; 5. Empêcher la fin du script (pour que le serveur reste actif)
-;; (sb-ext:exit :code 0 :abort t))  ; Ne pas quitter, sauf si erreur
+  (defparameter mcp-server::*debug* nil)
+  (mcp-server::main)
+  (format t "Server started~%"))
