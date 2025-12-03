@@ -23,8 +23,16 @@
 
 (in-package :mcp-client)
 
-(defparameter *ollama-url* "http://localhost:11434/api/chat")
-(defparameter *ollama-model* "llama3.2")
+(defun getenv-or (name default)
+  (or (uiop:getenv name)
+      default))
+
+(defparameter *ollama-url*
+  (getenv-or "OLLAMA_URL"  "http://localhost:11434/api/chat"))
+
+(defparameter *ollama-model*
+  (getenv-or "OLLAMA_MODEL" "llama3.2"))
 
 ;; URL de ton serveur MCP HTTP (exposé avec Hunchentoot)
-(defparameter *mcp-url* "http://localhost:8000/mcp")
+(defparameter *mcp-url*
+  (getenv-or "MCP_URL" "http://localhost:8000/mcp"))

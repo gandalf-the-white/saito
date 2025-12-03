@@ -6,7 +6,8 @@
   :license ""
   :depends-on (:drakma
                :jonathan
-               :babel)
+               :babel
+               :local-time)
   :components ((:module "src"
                 :components
                 ((:file "package")
@@ -16,16 +17,4 @@
                  (:file "ollama-client")
                  (:file "agent")
                  (:file "main"))))
-  :description ""
-  :in-order-to ((test-op (test-op "mcp-client/tests"))))
-
-(defsystem "mcp-client/tests"
-  :author ""
-  :license ""
-  :depends-on ("mcp-client"
-               "rove")
-  :components ((:module "tests"
-                :components
-                ((:file "main"))))
-  :description "Test system for client"
-  :perform (test-op (op c) (symbol-call :rove :run c)))
+  :description "")

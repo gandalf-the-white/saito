@@ -29,5 +29,5 @@
       (declare (ignore headers uri stream))
       (dbg "HTTP POST => status ~A" status)
       (when (>= status 400)
-        (error "POST ~A -> HTTP ~A (~A)" url status (body->string body)))
+        (error "POST ~A -> HTTP ~A. Body: ~A" url status (body->string body)))
       (body->string body))))
