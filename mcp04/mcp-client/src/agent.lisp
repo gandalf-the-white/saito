@@ -28,7 +28,7 @@ Your goal for this user is:
 - Generate the VM with terraform-proxmox, then
 - Use terraform-view-file to show the actual contents of the generated .tf file, or explain why it failed.")
 
-(defparameter *system-prompt-00*
+(defparameter *system-prompt-old*
   "You are an intelligent AI agent capable of reasoning and using tools through the MCP server.
 You can perform tasks by selecting tools and providing appropriate parameters.
 You must always read tool responses carefully and use the structured data they provide.
