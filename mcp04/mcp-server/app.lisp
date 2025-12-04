@@ -18,6 +18,6 @@
 
 ;;; 4. Démarrer le serveur
 (let ((*package* (find-package :mcp-server)))
-  (defparameter mcp-server::*debug* nil)
+  (defparameter mcp-server::*debug* t)
   (mcp-server::main)
   (format t "Server started~%"))

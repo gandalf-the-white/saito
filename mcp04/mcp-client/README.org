@@ -22,6 +22,8 @@
 (run-mcp-ollama-session
  "Appelle l’outil terraform-proxmox avec les paramètres suivants :
 vm_name=debug-vm, cores=1, memory=1024, disk_size=5G, bridge=vmbr3")
+(run-mcp-ollama-session
+ "Utilise l'outil terraform-view-file pour montrer le contenu du script Terraform que tu as généré pour la VM debug-vm.")
 #+end_src
 
 or use the loop

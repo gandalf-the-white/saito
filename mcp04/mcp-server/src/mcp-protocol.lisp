@@ -40,10 +40,12 @@
       (if (null tool)
           (make-error-response id -32602 (format nil "Unknown tool: ~A" name))
           (handler-case
-              (let* ((args-ht (if (hash-table-p arguments)
-                                  arguments
-                                  (json-object->hash-table arguments)))
-                     (text-result (funcall (mcp-tool-handler tool) args-ht))
+              (let* (
+                     ;; (args-ht (if (hash-table-p arguments)
+                     ;; arguments
+                     ;; (json-object->hash-table arguments)))
+                     ;; (text-result (funcall (mcp-tool-handler tool) args-ht))
+                     (text-result (funcall (mcp-tool-handler tool) arguments))
                      (result `(("content" .
                                 ((( "type" . "text")
                                   ("text" . ,(princ-to-string text-result)))))

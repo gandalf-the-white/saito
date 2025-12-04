@@ -41,3 +41,18 @@ Content-Type: application/json
     }
   }
 }
+
+# POST Terraform view file
+POST http://localhost:8000/mcp/tools/call
+Content-Type: application/json
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "method": "tools/call",
+  "params": {
+    "name": "terraform-view-file",
+    "arguments": {
+      "path": "/Users/laurent/github/saito/mcp04/mcp-server/web01.tf"
+    }
+  }
+}

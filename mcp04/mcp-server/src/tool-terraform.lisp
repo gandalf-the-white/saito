@@ -45,7 +45,40 @@ resource \"proxmox_vm_qemu\" \"~A\" {
     (with-open-file (out path :direction :output :if-exists :supersede :if-does-not-exist :create)
       (format out "~A" content))
     (dbg "Fichier ecrit: ~A (~A octets)" path (length content))
-    (format nil "~A" content)))
+    (format nil "Terraform script generated at: ~A" path)))
+
+(defun tool-view-script-tf (params)
+  "Send back the terraform file (.tf)"
+  (handler-case
+      (let* ((path (gethash "path" params))
+             (max-size (* 100 1024))) ;; 100 ko max
+        ;; (if (and path (probe-file path))
+        ;;     ;; Read the content and send
+        ;;     (with-open-file (in path :direction :input)
+        ;;       (let ((content (make-string (file-length in))))
+        ;;         (read-sequence content in)
+        ;;         (format nil "Content of ~A:~%~A" path content)))
+        ;;     ;; Error
+        ;;     (format nil "Error read file: ~A" path)))
+        (cond
+          ((null path)
+           (format nil "No path include. We need it: \"path\"."))
+          ((not (probe-file path))
+           (format nil "File unknown: ~A" path))
+          ((not (string-suffix-p ".tf" path))
+           (format nil "The file ~A is not a terraform file (.tf)." path))
+          (t
+           (with-open-file (in path :direction :input :external-format :utf-8)
+             (let* ((size (file-length in))
+                    (to-read (min size max-size))
+                    (content (make-string to-read)))
+               (read-sequence content in)
+               (when (> size max-size)
+                 (setf content (concatenate 'string content
+                                            "\n\n… [Tronqué : fichier > 100 Ko] …")))
+               (format nil "📄 **Terraform file**: `~A`\n```hcl\n~A\n```" path content))))))
+    (error (e)
+      (format nil "Error reading file: ~A" e))))
 
 
 (register-mcp-tool
@@ -79,3 +112,16 @@ resource \"proxmox_vm_qemu\" \"~A\" {
                       ("description" . "Network bridge, e.g. vmbr0.")))))
                   )
                 :handler #'tool-get-script-tf))
+
+(register-mcp-tool
+ (make-instance 'mcp-tool
+                :name "terraform-view-file"
+                :title "Terraform View"
+                :description "View the content of a generated Terraform (.tf) file."
+                :input-schema
+                '(("type" . "object")
+                  ("properties" .
+                   (("path" .
+                     (("type" . "string")
+                      ("description" . "Absolute path of the Terraform file to display."))))))
+                :handler #'tool-view-script-tf))
