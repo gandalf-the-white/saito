@@ -3,7 +3,6 @@
 (defun main ()
   (handler-case
       (progn
-        (defparameter *debug* nil)
         (start-mcp-http-server :port 8000) ;; our start-app, for example clack:clack-up
         ;; let the webserver run,
         ;; keep the server thread in the foreground:

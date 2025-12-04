@@ -14,10 +14,10 @@
 (push (uiop:getcwd) asdf:*central-registry*)
 
 ;;; 3. Charger ton système
-(ql:quickload "mcp-server")
+(ql:quickload "mcp-client")
 
 ;;; 4. Démarrer le serveur
-(let ((*package* (find-package :mcp-server)))
-  (defparameter mcp-server::*debug* t)
-  (mcp-server::main)
-  (dbg "Server started~%"))
+(let ((*package* (find-package :mcp-client)))
+  (defparameter mcp-client::*debug* t)
+  (mcp-client::main)
+  (dbg "Client started~%"))

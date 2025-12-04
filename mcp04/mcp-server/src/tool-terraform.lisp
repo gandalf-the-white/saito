@@ -52,20 +52,12 @@ resource \"proxmox_vm_qemu\" \"~A\" {
   (handler-case
       (let* ((path (gethash "path" params))
              (max-size (* 100 1024))) ;; 100 ko max
-        ;; (if (and path (probe-file path))
-        ;;     ;; Read the content and send
-        ;;     (with-open-file (in path :direction :input)
-        ;;       (let ((content (make-string (file-length in))))
-        ;;         (read-sequence content in)
-        ;;         (format nil "Content of ~A:~%~A" path content)))
-        ;;     ;; Error
-        ;;     (format nil "Error read file: ~A" path)))
         (cond
           ((null path)
            (format nil "No path include. We need it: \"path\"."))
           ((not (probe-file path))
            (format nil "File unknown: ~A" path))
-          ((not (string-suffix-p ".tf" path))
+          ((not (uiop::string-suffix-p ".tf" path))
            (format nil "The file ~A is not a terraform file (.tf)." path))
           (t
            (with-open-file (in path :direction :input :external-format :utf-8)
