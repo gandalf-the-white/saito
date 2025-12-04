@@ -69,4 +69,4 @@ $ sbcl \
   --eval '(saito-client:main)' \
   --noinform --disable-debugger
 #+end_src
-We probably add in the /asdf:*registry*/ our directory just before.
+We probably add in the /asdf:*central-registry*/ our directory just before.
