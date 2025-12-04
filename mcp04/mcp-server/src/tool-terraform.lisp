@@ -103,8 +103,7 @@ resource \"proxmox_vm_qemu\" \"~A\" {
                       ("description" . "Proxmox node name (default pve).")))
                     ("bridge" .
                      (("type" . "string")
-                      ("description" . "Network bridge, e.g. vmbr0.")))))
-                  )
+                      ("description" . "Network bridge, e.g. vmbr0."))))))
                 :handler #'tool-get-script-tf))
 
 (register-mcp-tool
