@@ -55,6 +55,9 @@ Outils MCP disponibles :
  - get_weather
  - ollama_chat
 
+mcp> Crée une VM nommée web01 avec 2 CPU et 4 Go de RAM, puis montre-moi le contenu du fichier Terraform généré.
+mcp> Create a VM named web01 with 2 CPUs and 4 GB of RAM, then show me the contents of the generated terraform file.
+
 mcp> :q
 
 Bye.

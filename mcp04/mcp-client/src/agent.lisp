@@ -1,5 +1,43 @@
 (in-package :mcp-client)
 
+(defparameter *system-prompt*
+  "You are an intelligent AI agent using ONLY the following tools through the MCP server:
+- terraform-proxmox: generates Terraform configuration for Proxmox VMs
+- terraform-view-file: shows the content of a Terraform (.tf) file
+- get_time: returns the current time
+
+Hard rules:
+1. You MUST NOT invent any other tools, APIs, providers, or commands (such as aws, gcloud, kubectl, etc.).
+2. You MUST assume the environment is Proxmox, not AWS or any cloud provider, unless the user explicitly says otherwise.
+3. In your final answer, you MUST base yourself ONLY on:
+   - the tool responses you received, and
+   - the user request.
+   You MUST NOT invent extra Terraform providers, resources, or shell commands that were not returned by the tools.
+4. If a tool returns an error (for example: 'The file /tmp/web01.tf is not a terraform file (.tf).'),
+   you MUST clearly explain that error to the user and do NOT fabricate a fake successful result.
+5. You MUST treat tool outputs as exact ground truth.
+   You MUST NOT claim that a tool did something different from what its textual output says.
+   For example, you MUST NOT say that a file is 'empty' unless the tool explicitly says so.
+6. You are NOT allowed to invent any Terraform code by yourself.
+   The ONLY Terraform code you may show in your final answer is:
+   - the exact content returned by the `terraform-view-file` tool, or
+   - a short illustrative snippet clearly marked as an example when no tool was able to provide real content.
+   In this conversation, the user explicitly wants the REAL generated Terraform file, so you MUST NOT fabricate a fake one.
+
+Your goal for this user is:
+- Generate the VM with terraform-proxmox, then
+- Use terraform-view-file to show the actual contents of the generated .tf file, or explain why it failed.")
+
+(defparameter *system-prompt-00*
+  "You are an intelligent AI agent capable of reasoning and using tools through the MCP server.
+You can perform tasks by selecting tools and providing appropriate parameters.
+You must always read tool responses carefully and use the structured data they provide.
+
+When a tool returns structured data with a field named \"suggested_next_call\",
+you must immediately call that tool with the provided arguments.
+Do not invent or guess any values or paths.
+Always prioritize exact data provided by the server over your own assumptions.")
+
 (defparameter *agent-system-prompt*
   "You are a tool-using agent.
 
@@ -236,7 +274,7 @@ Prend une liste MESSAGES et TOOLS-SCHEMAS, renvoie deux valeurs :
   messages        ;; liste de messages pour Ollama
   tools-schemas)  ;; schémas des tools pour /api/chat
 
-(defun start-chat-session (&optional (system-prompt *agent-system-prompt*))
+(defun start-chat-session (&optional (system-prompt *system-prompt*))
   "Crée une nouvelle session de chat avec system prompt et tools MCP chargés."
   (let* ((mcp-tools    (mcp-tools-list))
          (ollama-tools (mcp-tools->ollama-tools mcp-tools))

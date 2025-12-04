@@ -9,7 +9,7 @@
          (image (gethash "image" params "local:vztmpl/debian-12-standard_12.0-1_amd64.tar.zst"))
          (bridge (gethash "bridge" params "vmbr3"))
          (target-node (gethash "target_node" params "proxmox"))
-         (path (format nil "./~A.tf" vm-name))
+         (path (format nil "/tmp/~A.tf" vm-name))
          (content (format nil
                           "terraform {
   required_providers {
@@ -57,7 +57,9 @@ resource \"proxmox_vm_qemu\" \"~A\" {
            (format nil "No path include. We need it: \"path\"."))
           ((not (probe-file path))
            (format nil "File unknown: ~A" path))
-          ((not (uiop::string-suffix-p ".tf" path))
+          ;; ((not (uiop::string-suffix-p ".tf" path))
+          ;; (format nil "The file ~A is not a terraform file (.tf)." path))
+          ((uiop::string-suffix-p ".tf" path)
            (format nil "The file ~A is not a terraform file (.tf)." path))
           (t
            (with-open-file (in path :direction :input :external-format :utf-8)
@@ -68,7 +70,7 @@ resource \"proxmox_vm_qemu\" \"~A\" {
                (when (> size max-size)
                  (setf content (concatenate 'string content
                                             "\n\n… [Tronqué : fichier > 100 Ko] …")))
-               (format nil "📄 **Terraform file**: `~A`\n```hcl\n~A\n```" path content))))))
+               (format nil "📄 **Terraform file**: `~A` \n  `~A` \n " path content))))))
     (error (e)
       (format nil "Error reading file: ~A" e))))
 

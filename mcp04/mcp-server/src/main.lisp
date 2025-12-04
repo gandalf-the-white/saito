@@ -7,7 +7,7 @@
         ;; let the webserver run,
         ;; keep the server thread in the foreground:
         ;; sleep for ± a hundred billion years.
-        (sleep 1000))
+        (loop (sleep 1000)))
 
     ;; Catch a user's C-c
     (#+sbcl sb-sys:interactive-interrupt
