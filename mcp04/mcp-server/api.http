@@ -52,7 +52,7 @@ Content-Type: application/json
   "params": {
     "name": "terraform-view-file",
     "arguments": {
-      "path": "/Users/laurent/github/saito/mcp04/mcp-server/web01.tf"
+      "path": "/tmp/web01.tf"
     }
   }
 }
