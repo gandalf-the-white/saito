@@ -1,51 +1,41 @@
 (in-package :mcp-server)
 
+(defun load-template (path)
+  (with-open-file (in path :direction :input)
+    (let ((content (make-string (file-length in))))
+      (read-sequence content in)
+      content)))
+
 (defun tool-get-script-tf (params)
   "MCP tool handler for terraform-proxmox."
-  (let* ((vm-name (gethash "vm_name" params "test-vm"))
-         (cores (gethash "cores" params 8))
-         (memory (gethash "memory" params "2048"))
-         (disk-size (gethash "disk_size" params "30G"))
-         (image (gethash "image" params "local:vztmpl/debian-12-standard_12.0-1_amd64.tar.zst"))
+  (let* ((endpoint (gethash "endpoint" params *end-point*))
+         (api_token (gethash "api_token" params *api-token*))
+         (publkeyctn (gethash "publkeyctn" params "/Users/laurent/.ssh/id_ed25519_proxmox.pub"))
+         (target_node (gethash "target_node" params "proxmox"))
+         (cores (gethash "cores" params 2))
+         (memory (gethash "memory" params 512))
+         (storage (gethash "storage" params "local-lvm"))
+         (image (gethash "image" params "local:vztmpl/debian-12-standard_12.12-1_amd64.tar.zst"))
          (bridge (gethash "bridge" params "vmbr3"))
-         (target-node (gethash "target_node" params "proxmox"))
-         (path (format nil "/tmp/~A.tf" vm-name))
-         (content (format nil
-                          "terraform {
-  required_providers {
-    proxmox = {
-      source  = \"Telmate/proxmox\"
-      version = \"3.0.1-rc4\"
-    }
-  }
-}
-
-provider \"proxmox\" {
-  pm_api_url      = \"https://proxmox.local:8006/api2/json\"
-  pm_user         = \"root@pam\"
-  pm_password     = \"changeme\"
-  pm_tls_insecure = true
-}
-
-resource \"proxmox_vm_qemu\" \"~A\" {
-  name         = \"~A\"
-  target_node  = \"~A\"
-  clone        = \"~A\"
-  cores        = ~A
-  memory       = ~A
-  disk {
-    size = \"~A\"
-  }
-  network {
-    bridge = \"~A\"
-  }
-  os_type = \"cloud-init\"
-}"
-                          vm-name vm-name target-node image cores memory disk-size bridge)))
-    (with-open-file (out path :direction :output :if-exists :supersede :if-does-not-exist :create)
-      (format out "~A" content))
+         (vlan (gethash "vlan" params 200))
+         (prefix (gethash "prefix" params "192.188.200"))
+         (octet (gethash "octet" params "109"))
+         (domain (gethash "domain" params "bebop.pmox"))
+         (nameserver (gethash "nameserver" params "192.168.68.1"))
+         (name (gethash "name" params))
+         (path (format nil "platform/~A.tf" name))
+         (template (load-template "templates/template_vm.tf"))
+         (content (format nil template
+                          endpoint api_token publkeyctn target_node cores memory storage
+                          image bridge vlan prefix octet domain nameserver name))
+         (content (string-right-trim '(#\Space #\Newline #\Return #\Tab #\~) content))
+         (content (coerce content 'string))
+         (content (remove #\Nul content)))
+    (with-open-file (out path :direction :output :if-exists :supersede :if-does-not-exist :create :external-format :utf-8)
+      (write-string content out))
     (dbg "Fichier ecrit: ~A (~A octets)" path (length content))
     (format nil "Terraform script generated at: ~A" path)))
+
 
 (defun tool-view-script-tf (params)
   "Send back the terraform file (.tf)"
@@ -70,8 +60,65 @@ resource \"proxmox_vm_qemu\" \"~A\" {
                  (read-sequence content in)
                  (when (> size max-size)
                    (setf content (concatenate 'string content
-                                              "\n\n… [Tronqué : fichier > 100 Ko] …")))
-                 (format nil "📄 **Terraform file**: `~A` \n  `~A` \n " path content)))))))
+                                              "\n\n… [Truncated : fichier > 100 Ko] …")))
+                 (format nil "**Terraform file**: `~A` ~%  `~A` ~%" path content)))))))
+    (error (e)
+      (format nil "Error reading file: ~A" e))))
+
+(defun run-terraform-validate (path &key (terraform-bin "terraform"))
+  "Validate script file (.tf)"
+  (let* ((path-name (pathname path))
+         (dir (make-pathname :directory (pathname-directory path-name))))
+    ;; (format t "path: ~A pathname: ~A dir: ~A ~%" path path-name dir)
+    (dbg "path: ~A~% path-name: ~A~% dir: ~A ~% bin: ~A" path path-name dir terraform-bin)
+    (multiple-value-bind (stdout stderr code)
+        (uiop:run-program
+         (list terraform-bin "validate" "-no-color")
+         :directory dir
+         :output :string
+         :error-output :string
+         :ignore-error-status t)
+      (values code stdout stderr))))
+
+(defun tool-validate-terraform-tf (params)
+  "MCP tool handler to validate a terraform file (.tf)."
+  (handler-case
+      (let* ((path (gethash "path" params))
+             (run-tf (gethash "run-terraform" params t))
+             (terraform-bin (or (gethash "terraform-bin" params)
+                                "terraform")))
+        (cond
+          ((null path)
+           (dbg "No path include. We need it: \"path\".")
+           (format nil "No path include. We need it: \"path\"."))
+          ((not (probe-file path))
+           (dbg "File unknown: ~A" path)
+           (format nil "File unknown: ~A" path))
+          (t
+           (let* ((exit-code nil)
+                  (stdout "")
+                  (stderr ""))
+             (when run-tf (multiple-value-setq (exit-code stdout stderr)
+                            (run-terraform-validate path :terraform-bin terraform-bin)))
+             (with-output-to-string (out)
+               (format out "Terraform Validation : ~A~%~%" path)
+               (cond
+                 ((not run-tf)
+                  (dbg "Ignored (run_terraform=false).~%")
+                  (format out "Ignored (run_terraform=false).~%"))
+                 ((or (null exit-code)(minusp exit-code))
+                  (dbg "Not done right.~%")
+                  (format out "Not done right.~%"))
+                 ((zerop exit-code)
+                  (dbg "OK (exit-code ~A).~%" exit-code)
+                  (format out "OK (exit-code ~A).~%" exit-code))
+                 (t
+                  (dbg "Echec (exit-code ~A).~%" exit-code)
+                  (format out "Echec (exit-code ~A).~%" exit-code)))
+               (when (> (length stdout) 0)
+                 (format out "~%--- stdout ---~%~A~%" stdout))
+               (when (> (length stderr) 0)
+                 (format out "~%--- stderr ---~%~A~%" stderr)))))))
     (error (e)
       (format nil "Error reading file: ~A" e))))
 
@@ -84,7 +131,7 @@ resource \"proxmox_vm_qemu\" \"~A\" {
                 :input-schema
                 '(("type" . "object")
                   ("properties" .
-                   (("vm_name" .
+                   (("name" .
                      (("type" . "string")
                       ("description" . "Name of the VM.")))
                     ("cores" .
@@ -93,15 +140,21 @@ resource \"proxmox_vm_qemu\" \"~A\" {
                     ("memory" .
                      (("type" . "integer")
                       ("description" . "RAM in MB.")))
-                    ("disk_size" .
+                    ("octet" .
                      (("type" . "string")
-                      ("description" . "Disk size, e.g., 20G.")))
+                      ("description" . "Lat digit of a IP address, e.g. \"100\"")))
                     ("image" .
                      (("type" . "string")
-                      ("description" . "Proxmox template or ISO name.")))
-                    ("target_node" .
+                      ("description" . "System name, e.g. \"local:vztmpl\/debian-12-standard_12.12-1_amd64.tar.zst\"")))
+                    ("prefix" .
                      (("type" . "string")
-                      ("description" . "Proxmox node name (default pve).")))
+                      ("description" . "Prefix of the IP address, e.g. \"192.168.28\".")))
+                    ("nameserver" .
+                     (("type" . "string")
+                      ("description" . "Nameserver IP address, e.g. \"192.168.28.1\".")))
+                    ("vlan" .
+                     (("type" . "integer")
+                      ("description" . "Vlan of the IP address, e.g. \"200\".")))
                     ("bridge" .
                      (("type" . "string")
                       ("description" . "Network bridge, e.g. vmbr0."))))))
@@ -119,3 +172,22 @@ resource \"proxmox_vm_qemu\" \"~A\" {
                      (("type" . "string")
                       ("description" . "Absolute path of the Terraform file to display."))))))
                 :handler #'tool-view-script-tf))
+
+(register-mcp-tool
+ (make-instance 'mcp-tool
+                :name "terraform-validate-file"
+                :title "Terraform Validate"
+                :description "Validates a Terraform file (.tf) for creating Proxmox VMs."
+                :input-schema
+                '(("type" . "object")
+                  ("properties" .
+                   (("path" .
+                     (("type" . "string")
+                      ("description" . "Absolute path to the Terraform (.tf) file to be validated..")))
+                    ("run-terraform" .
+                     (("type" . "boolean")
+                      ("description" . "If true, run `terraform validate` in the file directory.")))
+                    ("terraform-bin" .
+                     (("type" . "string")
+                      ("description" . "Terraform binary to use (default is \"terraform\")."))))))
+                :handler #'tool-validate-terraform-tf))

@@ -13,7 +13,7 @@ POST http://localhost:8000/mcp/tools/call
 Content-Type: application/json
 {
   "jsonrpc": "2.0",
-  "id": 1,
+  "id": 2,
   "method": "tools/call",
   "params": {
     "name": "get_time",
@@ -23,36 +23,56 @@ Content-Type: application/json
   }
 }
 
-# POST Terraform configuration
+# POST Terraform Create configuration
 POST http://localhost:8000/mcp/tools/call
 Content-Type: application/json
 {
   "jsonrpc": "2.0",
-  "id": 2,
+  "id": 3,
   "method": "tools/call",
   "params": {
     "name": "terraform-proxmox",
     "arguments": {
-      "vm_name": "web01",
-      "cores": "4",
-      "memory": "4096",
-      "disk_size": "20G",
-      "bridge": "vmbr0"
+      "name": "web01",
+      "cores": 4,
+      "memory": 4096,
+      "octet": "100",
+      "image": "local:vztmpl\/debian-12-standard_12.12-1_amd64.tar.zst",
+      "prefix": "192.188.200",
+      "nameserver": "192.168.68.1",
+      "vlan": 200,
+      "bridge": "vmbr3"
     }
   }
 }
 
-# POST Terraform view file
+# POST Terraform View file
 POST http://localhost:8000/mcp/tools/call
 Content-Type: application/json
 {
   "jsonrpc": "2.0",
-  "id": 2,
+  "id": 4,
   "method": "tools/call",
   "params": {
     "name": "terraform-view-file",
     "arguments": {
-      "path": "/tmp/web01.tf"
+      "path": "platform/web01.tf"
+    }
+  }
+}
+
+# POST Terraform Validate file
+POST http://localhost:8000/mcp/tools/call
+Content-Type: application/json
+{
+  "jsonrpc": "2.0",
+  "id": 4,
+  "method": "tools/call",
+  "params": {
+    "name": "terraform-validate-file",
+    "arguments": {
+      "path": "platform/web01.tf",
+      "run_terraform": true
     }
   }
 }
