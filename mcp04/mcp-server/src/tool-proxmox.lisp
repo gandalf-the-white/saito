@@ -1,5 +1,9 @@
 (in-package :mcp-server)
 
+;;------------------------------------------------------------------
+;; T O O L   S T A T U S 
+;;------------------------------------------------------------------
+
 (defun proxmox-get-json (url token-id token-secret)
   "Performs a GET request to the Proxmox API via drakma and returns a JSON hash table.."
   (multiple-value-bind (body status headers)
@@ -60,7 +64,69 @@
     (error (e)
       (format nil "Error during the VM check : ~A" e))))
 
+;;------------------------------------------------------------------
+;; T O O L   D E L E T E
+;;------------------------------------------------------------------
 
+(defun proxmox-delete (api node vmid token-id token-secret)
+  "Supprime une VM Proxmox via l’API (DELETE)."
+  (let* ((url (format nil "~A/nodes/~A/qemu/~A"
+                      api node vmid))
+         (auth-header (format nil "PVEAPIToken=~A=~A"
+                              token-id token-secret)))
+    (multiple-value-bind (body status headers)
+        (drakma:http-request
+         url
+         :method :delete
+         :additional-headers `(("Authorization" . ,auth-header))
+         :want-stream nil)
+      (declare (ignore headers))
+
+      ;; Vérifications de statut HTTP
+      (when (not (= status 200))
+        (error "Proxmox returned status ~A" status))
+
+      ;; Conversion vecteur-octets → string JSON
+      (let* ((json-string
+               (etypecase body
+                 (string body)
+                 ((vector (unsigned-byte 8))
+                  (flex:octets-to-string body :external-format :utf-8))))
+             (json (cl-json:decode-json-from-string json-string)))
+
+        json))))
+
+(defun tool-proxmox-delete-vm (params)
+  "Outil MCP : supprime une VM Proxmox via API REST."
+  (handler-case
+      (let* ((node         (gethash "node" params))
+             (vmid         (gethash "vmid" params))
+             (api-url      (gethash "api_url" params))
+             (token-id     (gethash "token_id" params))
+             (token-secret (gethash "token_secret" params)))
+
+        ;; Vérification des paramètres
+        (when (null node)        (return-from tool-proxmox-delete-vm "❌ Paramètre 'node' manquant"))
+        (when (null vmid)        (return-from tool-proxmox-delete-vm "❌ Paramètre 'vmid' manquant"))
+        (when (null api-url)     (return-from tool-proxmox-delete-vm "❌ Paramètre 'api_url' manquant"))
+        (when (null token-id)    (return-from tool-proxmox-delete-vm "❌ Paramètre 'token_id' manquant"))
+        (when (null token-secret)(return-from tool-proxmox-delete-vm "❌ Paramètre 'token_secret' manquant"))
+
+        ;; Appel réel à l’API Proxmox
+        (let* ((response (proxmox-delete api-url node vmid token-id token-secret))
+               (data (cdr (assoc :data response :test #'eq))))
+
+          (with-output-to-string (s)
+            (format s "=== Suppression de la VM ~A sur node ~A ===~%" vmid node)
+            (format s "UPID: ~A~%" data)
+            (format s "La tâche de suppression a été lancée avec succès."))))
+
+    (error (e)
+      (format nil "❌ Erreur lors de la suppression de la VM : ~A" e))))
+
+;;------------------------------------------------------------------
+;; T O O L   R E G I S T E R
+;;------------------------------------------------------------------
 
 (register-mcp-tool
  (make-instance 'mcp-tool
@@ -76,3 +142,18 @@
                     ("token_id" . (("type" . "string")))
                     ("token_secret" . (("type" . "string"))))))
                 :handler #'tool-terraform-check-vm))
+
+(register-mcp-tool
+ (make-instance 'mcp-tool
+                :name "proxmox-delete-vm"
+                :title "Delete VM"
+                :description "Supprime une VM Proxmox via l’API REST."
+                :input-schema
+                '(("type" . "object")
+                  ("properties" .
+                   (("node" . (("type" . "string")))
+                    ("vmid" . (("type" . "number")))
+                    ("api_url" . (("type" . "string")))
+                    ("token_id" . (("type" . "string")))
+                    ("token_secret" . (("type" . "string"))))))
+                :handler #'tool-proxmox-delete-vm))

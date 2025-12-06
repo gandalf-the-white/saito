@@ -79,6 +79,7 @@ Content-Type: application/json
 
 # POST Check vm status
 POST http://localhost:8000/mcp/tools/call
+Content-Type: application/json
 {
   "jsonrpc": "2.0",
   "id": 6,
@@ -88,6 +89,23 @@ POST http://localhost:8000/mcp/tools/call
     "arguments": {
       "node": "proxmox",
       "vmid": 1010,
+      "api_url": "https://proxmox.bebop.lan:8006/api2/json"
+    }
+  }
+}
+
+# POST Delete a VM 
+POST http://localhost:8000/mcp/tool/call
+Content-Type: application/json
+{
+  "jsonrpc": "2.0",
+  "id": 7,
+  "method": "tools/call",
+  "params": {
+    "name": "proxmox-delete-vm",
+    "arguments": {
+      "node": "proxmox",
+      "vmid": 101,
       "api_url": "https://proxmox.bebop.lan:8006/api2/json"
     }
   }
