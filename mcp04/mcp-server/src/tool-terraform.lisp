@@ -1,5 +1,9 @@
 (in-package :mcp-server)
 
+;;------------------------------------------------------------------
+;; T O O L   S C R I P T 
+;;------------------------------------------------------------------
+
 (defun load-template (path)
   (with-open-file (in path :direction :input)
     (let ((content (make-string (file-length in))))
@@ -28,7 +32,7 @@
          (template (load-template "templates/template_vm.tf"))
          (content (format nil template
                           endpoint api_token publkeyctn target_node cores memory storage
-                          image bridge vlan prefix octet domain nameserver name))
+                          image bridge vlan prefix octet domain nameserver name key))
          (content (string-right-trim '(#\Space #\Newline #\Return #\Tab #\~) content))
          (content (coerce content 'string))
          (content (remove #\Nul content)))
@@ -37,6 +41,9 @@
     (dbg "Fichier ecrit: ~A (~A octets)" path (length content))
     (format nil "Terraform script generated at: ~A" path)))
 
+;;------------------------------------------------------------------
+;; T O O L   V I E W 
+;;------------------------------------------------------------------
 
 (defun tool-view-script-tf (params)
   "Send back the terraform file (.tf)"
@@ -45,7 +52,7 @@
              (max-size (* 100 1024))) ;; 100 ko max
         (cond
           ((null path)
-           (format nil "No path include. We need it: \"path\"."))
+           (format nil "No path included. We need it: \"path\"."))
           ((not (probe-file path))
            (format nil "File unknown: ~A" path))
           (t
@@ -58,19 +65,26 @@
                (let* ((size (file-length in))
                       (to-read (min size max-size))
                       (content (make-string to-read)))
-                 (read-sequence content in)
+                 (read-sequence content in :end to-read)
+                 (setf content (string-right-trim '(#\Space #\Newline #\Return #\Tab #\~) content))
+                 (setf content (remove #\Nul content))
                  (when (> size max-size)
                    (setf content (concatenate 'string content
-                                              "\n\n… [Truncated : fichier > 100 Ko] …")))
-                 (format nil "**Terraform file**: `~A` ~%  `~A` ~%" path content)))))))
+                                              (format nil "~%~%… [Truncated : file > 100 Ko] …"))))
+                 (setf content (pretty-print-tf content))
+                 (format nil "**Terraform file**: `~A` (~A bytes)~%~%```~%~A~%```~%"
+                         path size content)))))))
     (error (e)
       (format nil "Error reading file: ~A" e))))
+
+;;------------------------------------------------------------------
+;; T O O L   V A L I D A T E
+;;------------------------------------------------------------------
 
 (defun run-terraform-validate (path &key (terraform-bin "terraform"))
   "Validate script file (.tf)"
   (let* ((path-name (pathname path))
          (dir (make-pathname :directory (pathname-directory path-name))))
-    ;; (format t "path: ~A pathname: ~A dir: ~A ~%" path path-name dir)
     (dbg "path: ~A~% path-name: ~A~% dir: ~A ~% bin: ~A" path path-name dir terraform-bin)
     (multiple-value-bind (stdout stderr code)
         (uiop:run-program
@@ -123,6 +137,63 @@
     (error (e)
       (format nil "Error reading file: ~A" e))))
 
+;;------------------------------------------------------------------
+;; T O O L   A P P L Y
+;;------------------------------------------------------------------
+
+(defun run-terraform-command (cmd-list &key directory)
+  "Apply script file (.tf)"
+  (dbg "cmd-list: ~A~% dir: ~A ~%" cmd-list directory)
+  (multiple-value-bind (out err code)
+      (uiop:run-program
+       cmd-list
+       :directory directory
+       :output :string
+       :error-output
+       :ignore-error-status t)
+    (values code out err)))
+
+(defun tool-apply-terraform-tf (params)
+  "MCP tool handler to apply a terraform file (.tf)."
+  (handler-case
+      (let* ((path (gethash "path" params))
+             (terraform-bin (or (gethash "terraform-bin" params)
+                                "terraform")))
+        (cond
+          ((null path)
+           (format nil "No path include. We need it: \"path\"."))
+          ((not (probe-file path))
+           (format nil "File unknown: ~A" path))
+          (t
+           (let* ((tru-path (truename path))
+                  (dir (uiop:pathname-directory-pathname tru-path)))
+             ;; terraform init
+             (multiple-value-bind (init-code init-out init-err)
+                 (run-terraform-command
+                  (list terraform-bin "init" "-no-color")
+                  :directory dir)
+               ;; init failed
+               (when (not (zerop init-code))
+                 (return-from tool-apply-terraform-tf
+                   (format nil "terraform init failed (exit ~A)\n--- stdout ---\n~A\n--- stderr ---\n~A"
+                           init-code init-out init-err)))
+               ;; init apply
+               (multiple-value-bind (init-code apply-out apply-err)
+                   (run-terraform-command
+                    (list terraform-bin "apply" "-auto-approve" "-no-color")
+                    :directory dir)
+
+                 (with-output-to-string (out)
+                   (format out "=== terraform apply ===~%")
+                   (format out "exit code: ~A~%~%" init-code)
+                   (format out "--- stdout ---~%~A~%" apply-out)
+                   (format out "--- stderr ---~%~A~%" apply-err))))))))
+    (error (e)
+      (format nil "Error apply file: ~A" e))))
+
+;;------------------------------------------------------------------
+;; T O O L   R E G I S T E R
+;;------------------------------------------------------------------
 
 (register-mcp-tool
  (make-instance 'mcp-tool
@@ -195,3 +266,22 @@
                      (("type" . "string")
                       ("description" . "Terraform binary to use (default is \"terraform\")."))))))
                 :handler #'tool-validate-terraform-tf))
+
+(register-mcp-tool
+ (make-instance 'mcp-tool
+                :name "terraform-apply-vm"
+                :title "Terraform Apply"
+                :description "Create the VM with the command \"terraform apply --auto-approve\"."
+                :input-schema
+                '(("type" . "object")
+                  ("properties" .
+                   (("path" .
+                     (("type" . "string")
+                      ("description" . "Absolute path to the Terraform (.tf) file to apply.")))
+                    ("run-terraform" .
+                     (("type" . "boolean")
+                      ("description" . "If true, run `terraform apply` in the file directory.")))
+                    ("terraform-bin" .
+                     (("type" . "string")
+                      ("description" . "Terraform binary to use (default is \"terraform\")."))))))
+                :handler #'tool-apply-terraform-tf))

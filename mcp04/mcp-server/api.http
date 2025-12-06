@@ -66,13 +66,29 @@ POST http://localhost:8000/mcp/tools/call
 Content-Type: application/json
 {
   "jsonrpc": "2.0",
-  "id": 4,
+  "id": 5,
   "method": "tools/call",
   "params": {
     "name": "terraform-validate-file",
     "arguments": {
       "path": "platform/web01.tf",
       "run_terraform": true
+    }
+  }
+}
+
+# POST Check vm status
+POST http://localhost:8000/mcp/tools/call
+{
+  "jsonrpc": "2.0",
+  "id": 6,
+  "method": "tools/call",
+  "params": {
+    "name": "terraform-check-vm",
+    "arguments": {
+      "node": "proxmox",
+      "vmid": 1010,
+      "api_url": "https://proxmox.bebop.lan:8006/api2/json"
     }
   }
 }

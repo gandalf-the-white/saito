@@ -24,8 +24,12 @@
 
 (defparameter *end-point* (uiop:getenv "TF_VAR_endpoint"))
 
-(defparameter *api-token* (uiop:getenv "TF_VAR_token"))
+(defparameter *api-token* (uiop:getenv "TF_VAR_api_token"))
 
-(defparameter *private-key* (uiop:getenv "TF_VAR_black_private_key"))
+(defparameter *token-id* (uiop:getenv "TF_VAR_token_id"))
+
+(defparameter *token-secret* (uiop:getenv "TF_VAR_token"))
+
+(defparameter *private-key* (uiop:getenv "TF_VAR_private_key"))
 
 (defparameter *ctn-public-key* (uiop:getenv "TF_VAR_ctn_public_key"))

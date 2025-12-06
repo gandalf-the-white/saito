@@ -5,6 +5,7 @@
   :author "spike"
   :license "MIT"
   :depends-on (:jonathan
+               :cl-json
                :drakma
                :hunchentoot
                :easy-routes
@@ -17,6 +18,7 @@
                  (:file "tools-registry")
                  (:file "tool-time")
                  (:file "tool-terraform")
+                 (:file "tool-proxmox")
                  (:file "mcp-protocol")
                  (:file "http-server")
                  (:file "main"))))

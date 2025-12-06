@@ -63,12 +63,12 @@ resource "proxmox_virtual_environment_container" "oracle" {
     size         = 8
   }
 
-  # Image template (stockée dans local:vztmpl/)
+  # Image template (Stored in local:vztmpl/)
   operating_system {
     template_file_id = local.image
   }
 
-  # Réseau + VLAN 200 (IP via DHCP)
+  # Network + VLAN 200 (IP via DHCP)
   network_interface {
     name     = "eth0"
     bridge   = local.bridge
