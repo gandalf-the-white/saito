@@ -10,7 +10,7 @@
   "MCP tool handler for terraform-proxmox."
   (let* ((endpoint (gethash "endpoint" params *end-point*))
          (api_token (gethash "api_token" params *api-token*))
-         (publkeyctn (gethash "publkeyctn" params "/Users/laurent/.ssh/id_ed25519_proxmox.pub"))
+         (publkeyctn (gethash "publkeyctn" params *ctn-public-key*))
          (target_node (gethash "target_node" params "proxmox"))
          (cores (gethash "cores" params 2))
          (memory (gethash "memory" params 512))
@@ -23,6 +23,7 @@
          (domain (gethash "domain" params "bebop.pmox"))
          (nameserver (gethash "nameserver" params "192.168.68.1"))
          (name (gethash "name" params))
+         (key (hethash "key" params) *private-key*)
          (path (format nil "platform/~A.tf" name))
          (template (load-template "templates/template_vm.tf"))
          (content (format nil template
@@ -157,7 +158,10 @@
                       ("description" . "Vlan of the IP address, e.g. \"200\".")))
                     ("bridge" .
                      (("type" . "string")
-                      ("description" . "Network bridge, e.g. vmbr0."))))))
+                      ("description" . "Network bridge, e.g. vmbr0.")))
+                    ("key" .
+                     (("type" . "string")
+                      ("description" . "ssh private key"))))))
                 :handler #'tool-get-script-tf))
 
 (register-mcp-tool
