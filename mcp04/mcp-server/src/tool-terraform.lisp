@@ -23,7 +23,7 @@
          (domain (gethash "domain" params "bebop.pmox"))
          (nameserver (gethash "nameserver" params "192.168.68.1"))
          (name (gethash "name" params))
-         (key (hethash "key" params) *private-key*)
+         (key (gethash "key" params *private-key*))
          (path (format nil "platform/~A.tf" name))
          (template (load-template "templates/template_vm.tf"))
          (content (format nil template

@@ -28,4 +28,4 @@
 
 (defparameter *private-key* (uiop:getenv "TF_VAR_black_private_key"))
 
-(defparameter *ctn-public-key*) (uiop:getenv "TF_VAR_ctn_public_key")
+(defparameter *ctn-public-key* (uiop:getenv "TF_VAR_ctn_public_key"))
