@@ -1,6 +1,6 @@
 (in-package :mcp-server)
 
-(defparameter *debug* t)
+(defparameter *debug* nil)
 
 (defmacro dbg (fmt &rest args)
   `(when *debug*
