@@ -28,11 +28,25 @@
          (nameserver (gethash "nameserver" params "192.168.68.1"))
          (name (gethash "name" params))
          (key (gethash "key" params *private-key*))
-         (path (format nil "platform/~A.tf" name))
-         (template (load-template "templates/template_vm.tf"))
+         (path (format nil (concatenate 'string *platform-path* "~A.tf") name))
+         (template (load-template (concatenate 'string *templates-path* "template_vm.tf")))
          (content (format nil template
-                          endpoint api_token publkeyctn target_node cores memory storage
-                          image bridge vlan prefix octet domain nameserver name key))
+                          endpoint
+                          api_token
+                          publkeyctn
+                          target_node
+                          cores
+                          memory
+                          storage
+                          image
+                          bridge
+                          vlan
+                          prefix
+                          octet
+                          domain
+                          nameserver
+                          name
+                          key))
          (content (string-right-trim '(#\Space #\Newline #\Return #\Tab #\~) content))
          (content (coerce content 'string))
          (content (remove #\Nul content)))
@@ -260,7 +274,7 @@
 
 (register-mcp-tool
  (make-instance 'mcp-tool
-                :name "terraform-proxmox"
+                :name "terraform-create-file"
                 :title "Terraform Script"
                 :description "Generate a Terraform configuration file for Proxmox VMs."
                 :input-schema

@@ -3,17 +3,17 @@
 (defparameter *current-session* nil)
 
 (defun ensure-current-session ()
-  "Retourne la session courante, en la créant si nécessaire."
+  "Returns the current session, creating it if necessary."
   (or *current-session*
       (setf *current-session* (start-chat-session))))
 
 (defun run-mcp-ollama-repl (&key (prompt "mcp> "))
-  "Boucle interactive pour discuter avec l'agent Ollama+MCP (multi-turn).
+  "Interactive loop for chatting with the Ollama+MCP agent (multi-turn).
 
-Commandes spéciales :
-  :tools             -> afficher la liste des tools MCP
-  :reset             -> réinitialiser la session (oublier le contexte)
-  :q, :quit, :exit   -> quitter la boucle."
+Special orders :
+  :tools             -> display the list of MCP tools
+  :reset             -> reset the session (forget the context)
+  :q, :quit, :exit   -> exit the loop."
   (format t "MCP/Ollama interactive session (multi-turn).~%")
   (format t "Commands: :tools, :reset, :q, :quit, :exit~%~%")
   (loop
@@ -29,17 +29,18 @@ Commandes spéciales :
       (let ((trimmed (string-trim '(#\Space #\Tab #\Newline #\Return) line)))
         (when (> (length trimmed) 0)
           (cond
-            ;; Afficher les tools MCP
+            ;; Show tools MCP
             ((string= trimmed ":tools")
              (handler-case
                  (mcp-print-tools)
                (error (e)
                  (format t "~&[ERROR] ~A~%~%" e))))
-            ;; Réinitialiser la session (on oublie le contexte)
+            ;; Reset the session (we forget the context)
+
             ((string= trimmed ":reset")
              (setf *current-session* nil)
              (format t "~&[INFO] Session reset. New context will be created on next question.~%~%"))
-            ;; Sinon : question normale à l'agent (multi-turn)
+            ;; Otherwise: normal question to the agent (multi-turn).
             (t
              (handler-case
                  (let* ((session (ensure-current-session))
@@ -49,5 +50,5 @@ Commandes spéciales :
                  (format t "~&[ERROR] ~A~%~%" e))))))))))
 
 (defun main ()
-  "Point d'entrée pratique si tu veux lancer le client depuis la ligne de commande."
+  "Convenient entry point if you want to launch the client from the command line."
   (run-mcp-ollama-repl))

@@ -6,7 +6,7 @@
   (incf *mcp-next-id*))
 
 (defun mcp-http-request (method params)
-  "Envoie une requête JSON-RPC 2.0 au serveur MCP via HTTP et renvoie un hash-table."
+  "Sends a JSON-RPC 2.0 request to the MCP server via HTTP and returns a hash table."
   (let* ((id  (mcp-next-id))
          (req `(("jsonrpc" . "2.0")
                 ("id"      . ,id)
@@ -17,7 +17,7 @@
     (parse body-str :as :hash-table)))
 
 (defun mcp-tools-list ()
-  "Retourne la liste des outils MCP (liste de hash-tables)."
+  "Returns the list of MCP tools (list of hash tables)."
   (let* ((resp   (mcp-http-request "tools/list" '()))
          (result (and resp (gethash "result" resp)))
          (tools  (and result (gethash "tools" result))))
@@ -28,8 +28,8 @@
       (t nil))))
 
 (defun mcp-tools-list-text (conn-ignored)
-  "Renvoie la liste des noms de tools MCP sous forme de liste de chaînes.
-conn-ignored est là pour compat avec l'ancienne signature, mais ignoré."
+  "Returns the list of MCP tool names as a list of strings.
+conn-ignored is there to be compatible with the old signature, but ignored."
   (declare (ignore conn-ignored))
   (let ((tools (mcp-tools-list)))
     (when tools
@@ -40,8 +40,8 @@ conn-ignored est là pour compat avec l'ancienne signature, mais ignoré."
               collect name))))
 
 (defun mcp-call-tool-text (name args-alist)
-  "Appelle tools/call pour le tool NAME avec ARGS-ALIST.
-Renvoie le texte du premier bloc (result.content[0].text)."
+  "Call tools/call for the tool NAME with ARGS-ALIST.
+Returns the text of the first block (result.content[0].text)."
   (let* ((params `(("name" . ,name)
                    ("arguments" . ,args-alist)))
          (resp   (mcp-http-request "tools/call" params))

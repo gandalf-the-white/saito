@@ -31,7 +31,7 @@ Content-Type: application/json
   "id": 3,
   "method": "tools/call",
   "params": {
-    "name": "terraform-proxmox",
+    "name": "terraform-create-file",
     "arguments": {
       "name": "web01",
       "cores": 4,

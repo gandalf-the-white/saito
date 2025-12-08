@@ -2,8 +2,11 @@
 
 (defparameter *system-prompt*
   "You are an intelligent AI agent using ONLY the following tools through the MCP server:
-- terraform-proxmox: generates Terraform configuration for Proxmox VMs
+- terraform-create-file: generates Terraform configuration for Proxmox VMs
 - terraform-view-file: shows the content of a Terraform (.tf) file
+- terraform-destroy-vm: destroy the content of a Terraform (.tf) file
+- terraform-apply-vm: apply the content of a Terraform (.tf) file
+- terraform-validate-file: validate the Terraform (.tf) file
 - get_time: returns the current time
 
 Hard rules:
@@ -13,12 +16,13 @@ Hard rules:
    - the tool responses you received, and
    - the user request.
    You MUST NOT invent extra Terraform providers, resources, or shell commands that were not returned by the tools.
-4. If a tool returns an error (for example: 'The file /tmp/web01.tf is not a terraform file (.tf).'),
+4. You must use the same path of objects returned and their address.
+5. If a tool returns an error (for example: 'The file /tmp/web01.tf is not a terraform file (.tf).'),
    you MUST clearly explain that error to the user and do NOT fabricate a fake successful result.
-5. You MUST treat tool outputs as exact ground truth.
+6. You MUST treat tool outputs as exact ground truth.
    You MUST NOT claim that a tool did something different from what its textual output says.
    For example, you MUST NOT say that a file is 'empty' unless the tool explicitly says so.
-6. You are NOT allowed to invent any Terraform code by yourself.
+7. You are NOT allowed to invent any Terraform code by yourself.
    The ONLY Terraform code you may show in your final answer is:
    - the exact content returned by the `terraform-view-file` tool, or
    - a short illustrative snippet clearly marked as an example when no tool was able to provide real content.
@@ -46,14 +50,14 @@ Your available tools are provided in the 'tools' section of the chat API.
 
 IMPORTANT RULES:
 - Always answer in the same language as the user.
-- When a question requires external information (weather, time, etc.), you MUST call a tool.
+- When a question requires external information (weather, time, Virtual machine, terraform, proxmox, etc.), you MUST call a tool.
 - To call a tool, use the provided tool_calls mechanism.
 - Do not invent tool results. Always wait for the tool response if you call one.
 - If no tool is appropriate, answer normally in natural language.
 - When you have enough information, provide a clear and concise final answer.")
 
 (defun mcp-print-tools ()
-  "Affiche les tools MCP disponibles et renvoie la liste de leurs noms."
+  "Displays the available MCP tools and returns a list of their names."
   (let ((names (mcp-tools-list-text nil)))  ; paramètre ignoré dans mcp-tools-list-text
     (format t "Outils MCP disponibles :~%")
     (dolist (n names)
@@ -62,10 +66,10 @@ IMPORTANT RULES:
     names))
 
 (defun chat-session-ask (session user-input)
-  "Envoie USER-INPUT dans une CHAT-SESSION existante, avec contexte conservé.
-Retourne la réponse finale (string), met à jour la session in-place."
+  "Sends USER-INPUT to an existing CHAT-SESSION, with context preserved.
+Returns the final response (string), updates the session in-place."
   (let* ((messages (chat-session-messages session)))
-    ;; On ajoute le message user
+    ;; Add the user message
     (setf messages
           (append messages
                   (list `(("role" . "user")
@@ -76,16 +80,16 @@ Retourne la réponse finale (string), met à jour la session in-place."
       answer)))
 
 (defun run-mcp-ollama-session (user-input)
-  "Appel one-shot : crée une nouvelle session, envoie une question, renvoie la réponse."
+  "One-shot call: creates a new session, sends a question, returns the answer."
   (let* ((session (start-chat-session))
          (answer  (chat-session-ask session user-input)))
     answer))
 
 (defun run-mcp-ollama-turn (messages tools-schemas)
-  "Effectue un tour de boucle (user + éventuels tool_calls) avec Ollama.
-Prend une liste MESSAGES et TOOLS-SCHEMAS, renvoie deux valeurs :
-- la réponse finale (string)
-- les messages mis à jour (avec assistant + tools)."
+  "Performs a loop iteration (user + any tool_calls) with Ollama.
+Takes a list of MESSAGES and TOOLS-SCHEMAS, returns two values :
+- the final answer (string)
+- updated messages (with assistant + tools)."
   (loop
     (dbg "--- Appel Ollama ---")
     (dbg "Messages = ~A" messages)
@@ -99,7 +103,7 @@ Prend une liste MESSAGES et TOOLS-SCHEMAS, renvoie deux valeurs :
       (dbg "content = ~A" content)
       (dbg "tool_calls (brut) = ~A" tool-calls)
 
-      ;; Ajoute le message assistant à l'historique
+      ;; Adds the assistant message to the history
       (when message
         (setf messages
               (append messages
@@ -121,7 +125,7 @@ Prend une liste MESSAGES et TOOLS-SCHEMAS, renvoie deux valeurs :
                        (args-ht   (parse-arguments-maybe raw-args)))
                   (dbg "Tool_call: name=~A args=~A" fn-name args-ht)
                   (when fn-name
-                    ;; conversion hash-table -> alist pour MCP
+                    ;; hash-table -> alist conversion for MCP
                     (let ((alist-args nil))
                       (maphash (lambda (k v)
                                  (push (cons k v) alist-args))
@@ -137,11 +141,11 @@ Prend une liste MESSAGES et TOOLS-SCHEMAS, renvoie deux valeurs :
                                                 ("content" . ,tool-result)))))))))))))))))
 
 (defstruct chat-session
-  messages        ;; liste de messages pour Ollama
-  tools-schemas)  ;; schémas des tools pour /api/chat
+  messages        ;; list of messages for Ollama
+  tools-schemas)  ;; diagrams of tools for /api/chat
 
 (defun start-chat-session (&optional (system-prompt *system-prompt*))
-  "Crée une nouvelle session de chat avec system prompt et tools MCP chargés."
+  "Creates a new chat session with system prompt and MCP tools loaded."
   (let* ((mcp-tools    (mcp-tools-list))
          (ollama-tools (mcp-tools->ollama-tools mcp-tools))
          (messages

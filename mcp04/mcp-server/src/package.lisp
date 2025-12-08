@@ -33,3 +33,7 @@
 (defparameter *private-key* (uiop:getenv "TF_VAR_private_key"))
 
 (defparameter *ctn-public-key* (uiop:getenv "TF_VAR_ctn_public_key"))
+
+(defparameter *platform-path* (uiop:getenv "TF_VAR_platform_path"))
+
+(defparameter *templates-path* (uiop:getenv "TF_VAR_templates_path"))
