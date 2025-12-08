@@ -191,6 +191,68 @@
     (error (e)
       (format nil "Error apply file: ~A" e))))
 
+
+;;------------------------------------------------------------------
+;; T O O L   D E S T R O Y
+;;------------------------------------------------------------------
+
+(defun run-terraform-command (cmd-list &key directory)
+  "Exécute une commande terraform et retourne (exit-code stdout stderr)."
+  (multiple-value-bind (out err code)
+      (uiop:run-program
+       cmd-list
+       :directory directory
+       :output :string
+       :error-output :string
+       :ignore-error-status t)
+    (values code out err)))
+
+(defun tool-terraform-destroy-vm (params)
+  "Outil MCP : détruit la VM via 'terraform destroy -auto-approve'."
+  (handler-case
+      (let* ((path (gethash "path" params))
+             (terraform (or (gethash "terraform_bin" params) "terraform")))
+
+        ;; Validations
+        (when (null path)
+          (return-from tool-terraform-destroy-vm "Missing ‘path’ parameter"))
+
+        (when (not (probe-file path))
+          (return-from tool-terraform-destroy-vm
+            (format nil "The file does not exist. : ~A" path)))
+
+        (let* ((tru (truename path))
+               (dir (uiop:pathname-directory-pathname tru)))
+
+          ;; terraform init
+          (multiple-value-bind (init-code init-out init-err)
+              (run-terraform-command
+               (list terraform "init" "-no-color")
+               :directory dir)
+
+            (when (not (zerop init-code))
+              (return-from tool-terraform-destroy-vm
+                (format nil
+                        "terraform init failed (exit ~A)\n--- stdout ---\n~A\n--- stderr ---\n~A"
+                        init-code init-out init-err)))
+
+            ;; terraform destroy
+            (multiple-value-bind (code out err)
+                (run-terraform-command
+                 (list terraform "destroy" "-auto-approve" "-no-color")
+                 :directory dir)
+
+              (with-output-to-string (s)
+                (format s "=== terraform destroy ===~%")
+                (format s "exit code: ~A~%~%" code)
+                (format s "--- stdout ---~%~A~%" out)
+                (format s "--- stderr ---~%~A~%" err))))))
+
+    (error (e)
+      (format nil "Error during terraform destroy : ~A" e))))
+
+
+
 ;;------------------------------------------------------------------
 ;; T O O L   R E G I S T E R
 ;;------------------------------------------------------------------
@@ -285,3 +347,15 @@
                      (("type" . "string")
                       ("description" . "Terraform binary to use (default is \"terraform\")."))))))
                 :handler #'tool-apply-terraform-tf))
+
+(register-mcp-tool
+ (make-instance 'mcp-tool
+                :name "terraform-destroy-vm"
+                :title "Terraform Destroy"
+                :description "Deletes a Proxmox VM via 'terraform destroy -auto-approve'."
+                :input-schema
+                '(("type" . "object")
+                  ("properties" .
+                   (("path" . (("type" . "string")))
+                    ("terraform_bin" . (("type" . "string"))))))
+                :handler #'tool-terraform-destroy-vm))
