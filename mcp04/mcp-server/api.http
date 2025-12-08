@@ -8,7 +8,7 @@ Content-Type: application/json
   "params": []
 }
 
-# POST Terraform configuration
+# POST Terraform time
 POST http://localhost:8000/mcp/tools/call
 Content-Type: application/json
 {
@@ -61,6 +61,22 @@ Content-Type: application/json
   }
 }
 
+# POST Terraform Apply file
+POST http://localhost:8000/mcp/tools/call
+Content-Type: application/json
+{
+  "jsonrpc": "2.0",
+  "id": 5,
+  "method": "tools/call",
+  "params": {
+    "name": "terraform-apply-vm",
+    "arguments": {
+      "path": "platform/web01.tf",
+      "run_terraform": true
+    }
+  }
+}
+
 # POST Terraform Validate file
 POST http://localhost:8000/mcp/tools/call
 Content-Type: application/json
@@ -77,6 +93,21 @@ Content-Type: application/json
   }
 }
 
+# POST Terraform destroy file 
+POST http://localhost:8000/mcp/tool/call
+Content-Type: application/json
+{
+  "jsonrpc": "2.0",
+  "id": 8,
+  "method": "tools/call",
+  "params": {
+    "name": "terraform-destroy-vm",
+    "arguments": {
+      "path": "platform/web01.tf"
+    }
+  }
+}
+
 # POST Check vm status
 POST http://localhost:8000/mcp/tools/call
 Content-Type: application/json
@@ -85,7 +116,7 @@ Content-Type: application/json
   "id": 6,
   "method": "tools/call",
   "params": {
-    "name": "terraform-check-vm",
+    "name": "proxmox-check-vm",
     "arguments": {
       "node": "proxmox",
       "vmid": 1010,
@@ -110,3 +141,4 @@ Content-Type: application/json
     }
   }
 }
+

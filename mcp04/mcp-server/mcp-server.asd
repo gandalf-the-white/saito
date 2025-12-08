@@ -15,6 +15,7 @@
                 ((:file "package")
                  (:file "logging")
                  (:file "http-utils")
+                 (:file "pretty-print")
                  (:file "tools-registry")
                  (:file "tool-time")
                  (:file "tool-terraform")

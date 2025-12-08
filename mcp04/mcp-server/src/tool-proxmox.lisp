@@ -130,7 +130,7 @@
 
 (register-mcp-tool
  (make-instance 'mcp-tool
-                :name "terraform-check-vm"
+                :name "proxmox-check-vm"
                 :title "Check VM State"
                 :description "Check the status of a Proxmox VM via the API (drakma)."
                 :input-schema

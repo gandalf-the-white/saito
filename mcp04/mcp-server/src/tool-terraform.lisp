@@ -205,6 +205,7 @@
        :output :string
        :error-output :string
        :ignore-error-status t)
+    (dbg "Execute command ~A in the directory ~A~%" cmd-list directory)
     (values code out err)))
 
 (defun tool-terraform-destroy-vm (params)
@@ -356,6 +357,9 @@
                 :input-schema
                 '(("type" . "object")
                   ("properties" .
-                   (("path" . (("type" . "string")))
-                    ("terraform_bin" . (("type" . "string"))))))
+                   (("path" .
+                     (("type" . "string")))
+                    ("terraform_bin" .
+                     (("type" . "string")
+                      ("description" . "Terraform binary to use (default is \"terraform\")."))))))
                 :handler #'tool-terraform-destroy-vm))
