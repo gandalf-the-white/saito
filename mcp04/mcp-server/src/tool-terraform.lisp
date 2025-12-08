@@ -10,7 +10,7 @@
       (read-sequence content in)
       content)))
 
-(defun tool-get-script-tf (params)
+(defun tool-write-script-tf (params)
   "MCP tool handler for terraform-proxmox."
   (let* ((endpoint (gethash "endpoint" params *end-point*))
          (api_token (gethash "api_token" params *api-token*))
@@ -52,7 +52,7 @@
          (content (remove #\Nul content)))
     (with-open-file (out path :direction :output :if-exists :supersede :if-does-not-exist :create :external-format :utf-8)
       (write-string content out))
-    (dbg "Fichier ecrit: ~A (~A octets)" path (length content))
+    (dbg "Terraform script generated at: ~A (~A octets)" path (length content))
     (format nil "Terraform script generated at: ~A" path)))
 
 ;;------------------------------------------------------------------
@@ -276,7 +276,7 @@
  (make-instance 'mcp-tool
                 :name "terraform-create-file"
                 :title "Terraform Script"
-                :description "Generate a Terraform configuration file for Proxmox VMs."
+                :description "Generate a Terraform configuration (.tf) file for Proxmox VMs."
                 :input-schema
                 '(("type" . "object")
                   ("properties" .
@@ -310,7 +310,7 @@
                     ("key" .
                      (("type" . "string")
                       ("description" . "ssh private key"))))))
-                :handler #'tool-get-script-tf))
+                :handler #'tool-write-script-tf))
 
 (register-mcp-tool
  (make-instance 'mcp-tool
