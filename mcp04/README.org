@@ -118,7 +118,6 @@ package "mcp-server" <<Package>> PACKAGE_COLOR {
 
 [[file:./images/server.svg]]
 
-
 * Client
 ** UML Diagram
 #+begin_src plantuml :file ./images/client.svg :results silent :exports none
@@ -242,3 +241,6 @@ end note
 #+end_src
 
 [[file:images/client.svg]]
+
+* Context
+** Explanation
